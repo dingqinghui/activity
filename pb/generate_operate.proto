@@ -1,0 +1,117 @@
+syntax = "proto3";
+option go_package = ".;operate";
+package Game;
+
+
+import "global_operate_activity.proto";
+
+
+
+//获取运营活动列表
+message OperateGetListC2S
+{
+}
+
+
+//获取运营活动列表
+message OperateGetListS2C
+{
+     repeated  Operate  list     = 1;  //活动详细信息
+}
+
+
+//添加运营活动
+message OperateNewS2C
+{
+     repeated  Operate  list     = 1;  //活动详细信息
+}
+
+
+//更新运营活动内容
+message OperateUpdateS2C
+{
+    repeated OperateActivityDB detailed = 1;  //更新内容
+}
+
+
+//删除运营活动
+message OperateDeleteS2C
+{
+     int64 activityId = 1;  //活动Id
+}
+
+
+
+//领取运营任务奖励
+message OperateGetTaskRewardC2S
+{
+     int64  activityId        = 1;   // 活动Id
+     int32 tplIndex           = 2;   // 模板索引
+     repeated int32 taskIds   = 3;   //条目id
+}
+//领取运营任务奖励
+message OperateGetTaskRewardS2C
+{
+     int64  activityId        = 1;   // 活动Id
+     int32 tplIndex           = 2;   // 模板索引
+     repeated int32 taskIds   = 3;   //条目id
+}
+
+
+//签到
+message OperateSignC2S
+{
+    int64 activityId  = 1;    // 活动Id
+    int32 tplIndex = 2;       // 模板索引
+}
+//签到
+message OperateSignS2C
+{
+     int64 activityId  = 1;    // 活动Id
+     int32 tplIndex = 2;       // 模板索引
+}
+
+
+//补签
+message OperateRepairSignC2S
+{
+     int64 activityId  = 1;    // 活动Id
+     int32 tplIndex = 2;       // 模板索引
+}
+//补签
+message OperateRepairSignS2C
+{
+     int64 activityId  = 1;    // 活动Id
+     int32 tplIndex = 2;       // 模板索引
+}
+
+
+//购买商品
+message OperateShopBuyC2S
+{
+     int64 activityId  = 1;    // 活动Id
+     int32 tplIndex = 2;       // 模板索引
+     int32 goodsIndex = 3;     // 商品索引
+}
+//购买商品
+message OperateShopBuyS2C
+{
+     int64 activityId  = 1;    // 活动Id
+     int32 tplIndex = 2;       // 模板索引
+     int32 goodsIndex = 3;     // 商品索引
+}
+
+
+
+//获取积分奖励
+message OperateGetScoreRewardC2S
+{
+     int64 activityId  = 1;    // 活动Id
+     int32 scoreIndex  = 2;    // 积分索引
+}
+//获取积分奖励
+message OperateGetScoreRewardS2C
+{
+     int64 activityId  = 1;    // 活动Id
+     int32 scoreIndex  = 2;    // 积分索引
+}

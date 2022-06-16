@@ -1,0 +1,242 @@
+syntax = "proto3"; //[proto2|proto3]
+
+option go_package = ".;operate";
+package Game;
+
+// 运营活动时间类型
+enum OperateActivityTimeType {
+    ATT_INVALID = 0;
+    ABSOLUTE_TIME = 1;      // 绝对时间
+    REGISTER_TIME = 2;      // 注册时间
+    OPEN_SERVER_TIME = 3;   // 开服时间
+}
+
+// 活动模板类型
+enum ActivityTemplateType {
+    ATP_INVALID = 0;
+    SIGN_IN_TYPE = 1;            // 签到
+    CONDITION_TYPE = 2;          // 条件
+    CONSUMPTION_TYPE = 3;        // 消费
+    LOTTERY_TYPE = 4;            // 抽奖
+    SCORE_TYPE = 5;              // 积分
+}
+
+// 道具（货币）通过结构
+message ItemData {
+    int32 Id = 1;   //道具（货币）ID
+    int32 Num = 2;  //数量
+}
+
+// 图片信息
+message Image {
+    string                          Id = 1;             // 图片ID
+    string                          Name = 2;           // 图片名字
+    string                          Status = 3;         // 图片状态
+    string                          Url = 4;            // 图片下载地址
+}
+
+
+// 活动信息
+message OperateActivity {
+    int64                           Id = 1;                      // id
+    repeated int32                  Channel = 2;                 // 渠道
+    repeated int32                  Servers = 3;                 // 区服
+
+    OperateActivityTimeType         TimeType = 4;               // 活动时间类型
+    int64                           PredictionTime = 5;         // 活动预告开启时间
+    int64                           StartTime = 6;              // 活动开始时间
+    int64                           EndTime = 7;                // 活动结束时间
+    int64                           CloseDuration = 8;          // 活动关闭时间
+
+    string                          ActivityName = 9;           // 活动名字
+    string                          ActivityTitle = 10;         // 活动标题
+    string                          ActivityDescription = 11;   // 活动描述
+    Image                           BackgroundImgUrl = 12;      // 活动背景图地址
+    Image                           TitleImgUrl = 13;           // 活动标题图地址
+
+    bool                            IsNestedActivity = 14;      // 是否开启时间嵌套活动
+    map<int32, ActivityList>        ActivityList = 15;          // 活动模板ID组
+
+    Condition                       PreCondition = 16;          // 活动前置条件
+
+    repeated ScoreTemplate          ScoreSystem = 17;           // 积分系统
+}
+
+// 活动列表
+message ActivityList {
+    repeated ActivityTemplate List = 1;// 活动模板列表
+}
+
+// 活动模板数据
+message ActivityTemplate {
+    int64 Id = 1;                               // 模板ID
+    string Name = 2;                            // 模板名称
+    ActivityTemplateType TemplateType = 3;      // 模板类型
+
+    SignInTemplate         SignIn = 4;             // 签到
+    ConditionTemplate      Condition = 5;          // 条件
+    ConsumptionTemplate    Consumption = 6;        // 消耗
+    LotteryTemplate        Lottery = 7;            // 抽奖
+}
+
+
+
+
+// 条件结构(任务配置数据)
+message Condition {
+    int32                           Condition = 1;          // 条件类型
+    repeated    int32               ParamsList = 2;         // 条件参数
+    string                          Description = 3;        // 条件说明
+    repeated ItemData               RewardList = 4;         // 奖励列表
+}
+
+
+// 补签规则
+message RepairSignInRule {
+    repeated ItemData RSI_Expend = 1;               // 道具消耗补签
+    repeated Condition RSI_Condition = 2;           // 条件补签
+}
+
+// 签到奖励
+message SignInReward {
+    repeated ItemData SignInReward = 1;             // 签到奖励
+}
+
+
+
+// 签到模板数据
+message SignInTemplate {
+    bool TriggerCondition = 1;                      // 0被动（登陆）触发 1主动（按钮）触发
+    int32 SignInCount = 2;                          // 签到天数
+    int32 RepairSignInCount = 3;                    // 补签次数
+    repeated RepairSignInRule RepairSignIn = 4;     // 补签规则(长度等于补签次数)
+    repeated SignInReward RewardList = 5;           // 签到奖励(长度等于天数)
+}
+
+
+// 条件模板数据
+message ConditionTemplate {
+    repeated Condition  data = 1;
+}
+
+
+// 商品（消耗）兑换
+message ExchangeGoods {
+    repeated ItemData Goods = 1;            // 商品数据
+    bool IsLimit = 2;                       // 是否限购
+    int32 LimitCount = 3;                   // 限购次数
+    repeated ItemData Expend = 4;           // 消耗道具信息
+    int32 Discount = 5;                     // 折扣
+}
+
+
+
+// 消费模板
+message ConsumptionTemplate {
+    repeated ExchangeGoods SellGoods = 1;
+}
+
+// 抽奖
+message Lottery {
+    int32 SingleCost = 1;                   // 单抽消耗
+    int32 FirstSingleDiscount = 2;          // 单抽首次折扣
+    int32 MultiCount = 3;                   // 多抽次数
+    int32 FirstMultiDiscount = 4;           // 多抽首次折扣
+    int32 MultiDiscount = 5;                // 多抽折扣
+}
+
+
+// 抽奖模板
+message LotteryTemplate {
+    ItemData TargetGoods = 1;               // 包装道具
+    int32 CostItemId = 2;                   // 抽奖消耗道具ID
+    repeated Lottery LotteryList = 3;       // 抽奖列表
+    int32 GuaranteedCount = 4;              // 保底次数（共享）
+    ItemData GuaranteedItem = 5;            // 保底道具
+    int32 RewardPoolId = 6;                 // 奖池ID
+}
+
+
+
+
+// 奖池
+message RewardPool {
+    ItemData Reward = 1;
+    int32 WeightValue = 2;
+}
+// 积分模板
+message ScoreTemplate {
+    ItemData score = 1;                 // 积分道具
+    repeated ItemData Reward = 2;       // 对应积分奖励
+}
+
+// 任务数据
+message OperateTaskInfo
+{
+    int32 taskId = 1;
+    OperateTaskState taskState = 2; // 任务状态 0:进行中, 1:完成未领奖  2：完成已领奖
+    int32 progress = 3; // 任务进度
+    int32 completeNum = 4;// 完成次数
+}
+
+// 任务状态
+enum OperateTaskState
+{
+    OTS_Doing = 0; //任务进行中
+    OTS_Finish = 1; //任务结束,可领奖
+    OTS_Over = 2; //任务完成，已经领奖
+}
+
+
+
+
+
+message OperateActivityDB
+{
+    int64                                 ActivityId    = 1;               // 活动ID
+    OperateTaskInfo                       PreTaskInfo   = 2;               // 前置任务进度信息
+    map<int32,bool>                       GotScores     = 3;               // 已领取积分信息
+    map<int32, ActivityDBList>            ActivityList  = 4;               // 活动模板ID组
+}
+
+// 活动列表
+message ActivityDBList {
+    map<int32,ActivityTemplateDB> List = 1;// 活动模板列表
+}
+
+
+message ActivityTemplateDB
+{
+    SignInTemplateDB        SignInDB        = 1;
+    ConsumptionTemplateDB   ConsumptionDB   = 2;
+    ConditionTemplateDB     ConditionDB     = 3;
+}
+
+message ConsumptionTemplateDB {
+    map<int32,int32>  BuyCounts = 1;                 // 已购买次数
+}
+
+message SignInTemplateDB {
+    int32 SignedDay = 1;                            // 已签到天数
+    int64 LastSignTimestamp = 2;                    // 上次签到时间戳
+    repeated RepairCondition conditions = 3;        // 补签任务进度
+    int32 RepairCount = 4 ;                         // 补签次数
+}
+
+message RepairCondition {
+    repeated OperateTaskInfo tasks = 1;       // 补签任务进度
+}
+
+
+message ConditionTemplateDB
+{
+    repeated OperateTaskInfo taskInfo = 1;          // 任务进度信息
+}
+
+
+
+message Operate
+{
+     OperateActivityDB  detailed     = 1;  //活动详细信息
+     OperateActivity    conf         = 2;  //活动配置信息
+}
