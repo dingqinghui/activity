@@ -18,6 +18,23 @@ import (
 // RangeTaskFunType 触发任务遍历函数  return:true 触发任务成功
 type RangeTaskFunType func(conf *pb.Condition, taskInfo *pb.OperateTaskInfo) bool
 
+type (
+	// DataCmd 活动数据操作
+	DataCmd int
+	// DataCmdFun 活动数据操作回调函数
+	DataCmdFun func(activity *pb.OperateActivity, cmd DataCmd)
+)
+
+// 数据操作指令
+var (
+	// DataAdd 添加活动
+	DataAdd DataCmd = 1
+	// DataDelete 删除活动
+	DataDelete DataCmd = 2
+	// DataUpdate 更新活动
+	DataUpdate DataCmd = 3
+)
+
 func newActivity(dbData *pb.OperateActivityDB, mgr *ActivityMgr) (*Activity, error) {
 	if mgr == nil {
 		return nil, errors.New("mgr is nil")
@@ -271,7 +288,7 @@ func (m *Activity) isOpenTime() bool {
 	return m.timeTool.getStartTime() <= nowTime && nowTime <= m.timeTool.getEndTime()
 }
 
-func (m *Activity) callUpdateStatusFun(updateInfo *pb.OperateActivityDB, status global.DataCmd) {
+func (m *Activity) callUpdateStatusFun(updateInfo *pb.OperateActivityDB, status DataCmd) {
 	m.mgr.callActivityDataCmdFun(m.getId(), updateInfo, status)
 }
 
@@ -340,7 +357,7 @@ func (m *Activity) getScoreReward(player IPlayer, index int) error {
 }
 
 func (m *Activity) commonSaveDB() {
-	m.callUpdateStatusFun(m.generateScoreUpdateDBData(), global.DataUpdate)
+	m.callUpdateStatusFun(m.generateScoreUpdateDBData(), DataUpdate)
 }
 
 func (m *Activity) generateScoreUpdateDBData() *pb.OperateActivityDB {

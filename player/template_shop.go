@@ -104,7 +104,7 @@ func (m *shopTemplate) buy(player IPlayer, goodsIndex int) error {
 }
 
 func (m *shopTemplate) saveDB() {
-	m.activity.callUpdateStatusFun(m.generateUpdateData(), global.DataUpdate)
+	m.activity.callUpdateStatusFun(m.generateUpdateData(), DataUpdate)
 }
 
 func (m *shopTemplate) generateUpdateData() *pb.OperateActivityDB {

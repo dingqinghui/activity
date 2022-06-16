@@ -120,7 +120,7 @@ func (m *signTemplate) rangeTasks(f RangeTaskFunType) {
 // @receiver m
 //
 func (m *signTemplate) saveDB() {
-	m.activity.callUpdateStatusFun(m.generateUpdateData(), global.DataUpdate)
+	m.activity.callUpdateStatusFun(m.generateUpdateData(), DataUpdate)
 }
 
 //

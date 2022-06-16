@@ -12,81 +12,11 @@ import (
 	"github.com/dingqinghui/activity/global"
 	"github.com/dingqinghui/activity/pb"
 	player2 "github.com/dingqinghui/activity/player"
-	"strconv"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"testing"
 	"time"
 )
-
-func TestAll(t *testing.T) {
-	// 全局数据初始化
-	global.Init(nil, GlobalActivityDataUpdate, GetAreaStartTime, nil)
-
-	p := newPlayer()
-	// 玩家登录
-	_ = p.GetOperate().Login()
-	// 签到
-	_ = p.GetOperate().Sign(1, 1)
-
-	// 其他接口
-
-	// 触发任务
-	p.GetOperate().TriggerCondition(func(conf *pb.Condition, taskInfo *pb.OperateTaskInfo) bool {
-		if taskInfo.GetTaskState() != pb.OperateTaskState_OTS_Doing {
-			return false
-		}
-		// 触发
-		// 返回true 触发成功进行数据存档
-		return true
-	})
-}
-
-// /////////////////////////////////////////////////////////////////DB//////////////////////////////////////////////////////////////////////////
-
-func LoadOneGlobalOperatorActivityData(activityId int64) *pb.OperateActivity {
-	return nil
-}
-
-func DeleteGlobalOperatorActivityData(activityId int64) error {
-	return nil
-}
-
-// /////////////////////////////////////////////////////////////////DB//////////////////////////////////////////////////////////////////////////
-
-// /////////////////////////////////////////////////////////////////redis 通知//////////////////////////////////////////////////////////////////////////
-//
-// OnNotifyNewOperateActivity
-// @Description: gm 添加活动通知
-// @param _
-// @param field
-//
-func OnNotifyNewOperateActivity(_ int32, field string) {
-	activityId, _ := strconv.ParseInt(field, 10, 64)
-	activity := LoadOneGlobalOperatorActivityData(activityId)
-	if activity == nil {
-		return
-	}
-	global.Add(activity)
-}
-
-//
-// OnNotifyDeleteOperateActivity
-// @Description: gm 撤回活动通知
-// @param _
-// @param field
-//
-func OnNotifyDeleteOperateActivity(_ int32, field string) {
-	activityId, _ := strconv.ParseInt(field, 10, 64)
-	if err := DeleteGlobalOperatorActivityData(activityId); err != nil {
-		return
-	}
-	global.Delete(activityId)
-	// 广播所有在线玩家
-	//BroadcastInnerOnlinePlayer(GAME_CMD_INNER_DELETE_OPERATOR_ACTIVITY, activityId)
-}
-
-// /////////////////////////////////////////////////////////////////redis 通知//////////////////////////////////////////////////////////////////////////
-
-// /////////////////////////////////////////////////////////////////回调//////////////////////////////////////////////////////////////////////////
 
 //
 // GlobalActivityDataUpdate
@@ -97,26 +27,9 @@ func OnNotifyDeleteOperateActivity(_ int32, field string) {
 func GlobalActivityDataUpdate(activity *pb.OperateActivity, cmd global.DataCmd) {
 	switch cmd {
 	case global.DataAdd:
-		// 活动开始,广播在线玩家
+
 	case global.DataDelete:
 		// 活动结束,删除db数据
-	default:
-	}
-}
-
-//
-// PlayerActivityDataUpdate
-// @Description: 玩家数据更改回调函数
-// @param playerId
-// @param activity
-// @param cmd
-//
-func PlayerActivityDataUpdate(playerId int32, activityId int64, cmd global.DataCmd, updateInfo *pb.OperateActivityDB) {
-	switch cmd {
-	case global.DataAdd, global.DataUpdate:
-		// 更新玩家db数据
-	case global.DataDelete:
-		// 删除玩家db数据
 	default:
 	}
 }
@@ -130,46 +43,23 @@ func PlayerActivityDataUpdate(playerId int32, activityId int64, cmd global.DataC
 func GetAreaStartTime(int32) int64 {
 	return global.NowTimestamp()
 }
+func TestGlobal(t *testing.T) {
+	// 全局数据初始化
+	global.Init(nil, GlobalActivityDataUpdate, GetAreaStartTime, nil)
+	global.Init(nil, GlobalActivityDataUpdate, GetAreaStartTime, global.WithLogger(zap.New(zapcore.NewTee())))
+	global.Init(nil, GlobalActivityDataUpdate, GetAreaStartTime, global.WithLogConfig("", zap.DebugLevel))
 
-// /////////////////////////////////////////////////////////////////回调//////////////////////////////////////////////////////////////////////////
-
-// /////////////////////////////////////////////////////////////////内部消息//////////////////////////////////////////////////////////////////////////
-
-//
-// HandleNewOperatorActivity
-// @Description:内部消息：添加活动
-// @param player
-// @param _
-// @param msg
-// @return interface{}
-//
-func HandleNewOperatorActivity(p *player, activity *pb.OperateActivity) interface{} {
-	operator := p.GetOperate()
-	if !operator.Add(activity) {
-		return nil
-	}
-
-	// 通知客户端
-	return nil
+	// 添加活动
+	global.Add(&pb.OperateActivity{})
+	// 删除活动
+	global.Delete(1)
+	// 设置时区 默认东八区
+	global.SetTimeZero(8)
+	// 设置每日更新时间(每日几点算跨天)
+	global.SetEverydayUpdateHour(8)
 }
 
-//
-// HandleDeleteOperatorActivity
-// @Description: 内部消息：删除活动
-// @param player
-// @param _
-// @param msg
-// @return interface{}
-//
-func HandleDeleteOperatorActivity(p *player, activity *pb.OperateActivity) interface{} {
-	operator := p.GetOperate()
-	operator.Delete(activity.GetId())
-
-	// 通知客户端
-	return nil
-}
-
-// /////////////////////////////////////////////////////////////////内部消息//////////////////////////////////////////////////////////////////////////
+// /////////////////////////////////////////////////////////////////玩家//////////////////////////////////////////////////////////////////////////
 
 func newPlayer() *player {
 	p := &player{}
@@ -224,4 +114,40 @@ func (p *player) GetOperate() *player2.ActivityMgr {
 			PlayerActivityDataUpdate, nil)
 	}
 	return p.operate
+}
+
+//
+// PlayerActivityDataUpdate
+// @Description: 玩家数据更改回调函数
+// @param playerId
+// @param activity
+// @param cmd
+//
+func PlayerActivityDataUpdate(playerId int32, activityId int64, cmd player2.DataCmd, updateInfo *pb.OperateActivityDB) {
+	switch cmd {
+	case player2.DataAdd, player2.DataUpdate:
+		// 更新玩家db数据
+	case player2.DataDelete:
+		// 删除玩家db数据
+	default:
+	}
+}
+func TestPlayer(t *testing.T) {
+	p := newPlayer()
+	// 玩家登录
+	_ = p.GetOperate().Login()
+	// 签到
+	_ = p.GetOperate().Sign(1, 1)
+
+	// 其他接口
+
+	// 触发任务
+	p.GetOperate().TriggerCondition(func(conf *pb.Condition, taskInfo *pb.OperateTaskInfo) bool {
+		if taskInfo.GetTaskState() != pb.OperateTaskState_OTS_Doing {
+			return false
+		}
+		// 触发
+		// 返回true 触发成功进行数据存档
+		return true
+	})
 }

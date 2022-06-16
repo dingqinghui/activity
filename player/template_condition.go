@@ -154,7 +154,7 @@ func (m *taskTemplate) getCanReceiveReward() []*pb.ItemData {
 }
 
 func (m *taskTemplate) saveDB() {
-	m.activity.callUpdateStatusFun(m.generateUpdateData(), global.DataUpdate)
+	m.activity.callUpdateStatusFun(m.generateUpdateData(), DataUpdate)
 }
 
 func (m *taskTemplate) generateUpdateData() *pb.OperateActivityDB {

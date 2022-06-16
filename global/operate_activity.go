@@ -29,6 +29,12 @@ var (
 	areaRegisterTimeCb AreaRegisterTimeFun
 )
 
+// 活动全局管理模块
+var (
+	globalOperateActivityMgr *operatorActivityMgr
+	onceActivityMgr          sync.Once
+)
+
 type (
 	// DataCmd 活动数据操作
 	DataCmd int
@@ -36,22 +42,12 @@ type (
 	DataCmdFun func(activity *pb.OperateActivity, cmd DataCmd)
 )
 
-// 活动全局管理模块
-var (
-	globalOperateActivityMgr *operatorActivityMgr
-	onceActivityMgr          sync.Once
-)
-
 // 数据操作指令
 var (
-	// DataAdd 活动开启
+	// DataAdd 添加活动
 	DataAdd DataCmd = 1
-
 	// DataDelete 删除活动
 	DataDelete DataCmd = 2
-
-	// DataUpdate 活动数据更新
-	DataUpdate DataCmd = 3
 )
 
 //
@@ -142,7 +138,9 @@ func (m *operatorActivityMgr) addCache(pActivity *pb.OperateActivity) bool {
 		LogError("添加失败已经存在运营活动实例", zap.Int64("activityId", pActivity.GetId()))
 		return false
 	}
+	m.callDataCmdFun(activity, DataAdd)
 	m.activityMap.Store(pActivity.GetId(), pActivity)
+
 	LogInfo("添加运营活动实例成功", zap.Int64("activityId", pActivity.GetId()), zap.Any("activity", pActivity))
 	return true
 }

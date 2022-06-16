@@ -1,0 +1,46 @@
+@startuml
+namespace global {
+    class global.AreaRegisterTimeFun << (T, #FF7700) >>  {
+    }
+    class global.DataCmd << (T, #FF7700) >>  {
+    }
+    class global.DataCmdFun << (T, #FF7700) >>  {
+    }
+    class global.LogOption << (T, #FF7700) >>  {
+    }
+    class logger << (S,Aquamarine) >> {
+        - logPath string
+        - logLevel zapcore.Level
+
+        - init(opts ...LogOption) 
+        - initLog() 
+        - getLoggerWriter() io.Writer
+        - getLogger() *zap.Logger
+
+    }
+    class operatorActivityMgr << (S,Aquamarine) >> {
+        - activityMap sync.Map
+        - changStatusCallback DataCmdFun
+
+        - init(initData []*pb.OperateActivity, cb DataCmdFun) 
+        - batchDelete(deleteList []*pb.OperateActivity) error
+        - delete(activityId int64) 
+        - callDataCmdFun(activity *pb.OperateActivity, cmd DataCmd) 
+        - addCache(pActivity *pb.OperateActivity) bool
+        - rangeAll(f <font color=blue>func</font>(*pb.OperateActivity) ) 
+        - getActivity(activityId int64) *pb.OperateActivity
+        - checkExpire(activity *pb.OperateActivity) bool
+
+    }
+    class "<font color=blue>func</font>(*pb.OperateActivity, DataCmd) " as fontcolorbluefuncfontpbOperateActivityDataCmd {
+        'This class was created so that we can correctly have an alias pointing to this name. Since it contains dots that can break namespaces
+    }
+}
+"zap.Logger" *-- "global.logger"
+
+
+"__builtin__.int" #.. "global.DataCmd"
+"global.<font color=blue>func</font>(*logger) " #.. "global.LogOption"
+"global.fontcolorbluefuncfontpbOperateActivityDataCmd" #.. "global.DataCmdFun"
+"global.<font color=blue>func</font>(int32) int64" #.. "global.AreaRegisterTimeFun"
+@enduml

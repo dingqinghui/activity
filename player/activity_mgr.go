@@ -23,8 +23,8 @@ var (
 	templateNotExist = errors.New("template not exist")
 )
 
-// PlayerActivityCmdFun 活动数据操作回调函数
-type PlayerActivityCmdFun func(playerId int32, activityId int64, cmd global.DataCmd, updateInfo *pb.OperateActivityDB)
+// ActivityDataCmdFun 活动数据操作回调函数
+type ActivityDataCmdFun func(playerId int32, activityId int64, cmd DataCmd, updateInfo *pb.OperateActivityDB)
 
 //
 // IPlayer
@@ -50,7 +50,7 @@ type IPlayer interface {
 // @return *ActivityMgr
 //
 func NewActivityMgr(player IPlayer, areaId int32, channel int32, registerTime int64,
-	changeDataCallback PlayerActivityCmdFun, initData map[int64]*pb.OperateActivityDB) *ActivityMgr {
+	changeDataCallback ActivityDataCmdFun, initData map[int64]*pb.OperateActivityDB) *ActivityMgr {
 	if player == nil {
 		panic("operate player is nil")
 	}
@@ -100,7 +100,7 @@ type ActivityMgr struct {
 	// changStatusCallback
 	// @Description: 状态变化回调函数
 	//
-	changStatusCallback PlayerActivityCmdFun
+	changStatusCallback ActivityDataCmdFun
 }
 
 func (m *ActivityMgr) getPlayer() IPlayer {
@@ -120,7 +120,7 @@ func (m *ActivityMgr) getRegisterTime() int64 {
 	return m.registerTime
 }
 
-func (m *ActivityMgr) callActivityDataCmdFun(activityId int64, updateInfo *pb.OperateActivityDB, cmd global.DataCmd) {
+func (m *ActivityMgr) callActivityDataCmdFun(activityId int64, updateInfo *pb.OperateActivityDB, cmd DataCmd) {
 	if m.changStatusCallback == nil {
 		return
 	}
@@ -156,7 +156,7 @@ func (m *ActivityMgr) dbBatchDelete(deleteList []*pb.OperateActivityDB) error {
 
 		_ = m.getPlayer().OperateSendMail(activity.getCanReceiveReward(m.getPlayer()))
 
-		m.callActivityDataCmdFun(data.GetActivityId(), nil, global.DataDelete)
+		m.callActivityDataCmdFun(data.GetActivityId(), nil, DataDelete)
 	}
 	return nil
 }
@@ -174,7 +174,7 @@ func (m *ActivityMgr) dbBatchAdd(addList []*pb.OperateActivityDB) error {
 	}
 
 	for _, activity := range addList {
-		m.callActivityDataCmdFun(activity.GetActivityId(), activity, global.DataAdd)
+		m.callActivityDataCmdFun(activity.GetActivityId(), activity, DataAdd)
 	}
 	return nil
 }
@@ -332,7 +332,7 @@ func (m *ActivityMgr) Delete(activityId int64) bool {
 
 	_ = m.getPlayer().OperateSendMail(activity.getCanReceiveReward(m.getPlayer()))
 
-	m.callActivityDataCmdFun(activityId, nil, global.DataDelete)
+	m.callActivityDataCmdFun(activityId, nil, DataDelete)
 
 	delete(m.activityMap, activityId)
 	global.LogInfo("删除运营活动实例", zap.Int32("playerId", m.getPlayerId()), zap.Int64("activityId", activityId), zap.Any("Activity", activity))

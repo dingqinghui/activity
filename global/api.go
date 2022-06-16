@@ -93,7 +93,6 @@ func RangeAll(f func(*pb.OperateActivity)) {
 //
 func Delete(activityId int64) {
 	getGlobalOperateActivityMgr().delete(activityId)
-	// getTimeTask().delete(activityId)
 }
 
 //

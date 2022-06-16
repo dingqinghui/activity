@@ -1,0 +1,239 @@
+@startuml
+namespace player {
+    class Activity << (S,Aquamarine) >> {
+        - mgr *ActivityMgr
+        - templates <font color=blue>map</font>[int32][]iTemplate
+        - timeTool IActivityTime
+        - dbData *pb.OperateActivityDB
+        - conf *pb.OperateActivity
+
+        - init() 
+        - saveTemplateData(day int32, index int, data *pb.ActivityTemplateDB) 
+        - getTemplateData(day int32, index int) *pb.ActivityTemplateDB
+        - getId() int64
+        - getConf() *pb.OperateActivity
+        - getDbData() *pb.OperateActivityDB
+        - addTemplate(day int32, index int32, tplConf *pb.ActivityTemplate, dbData *pb.ActivityTemplateDB) iTemplate
+        - finishedPreCondition() bool
+        - invalid() error
+        - openDay() int32
+        - isExpire() bool
+        - getTemplates() []iTemplate
+        - getTemplate(index int) iTemplate
+        - rangeTemplates(f <font color=blue>func</font>(iTemplate) ) 
+        - isOpenTime() bool
+        - callUpdateStatusFun(updateInfo *pb.OperateActivityDB, status DataCmd) 
+        - rangeAllCondition(f RangeTaskFunType) 
+        - getScoreReward(player IPlayer, index int) error
+        - commonSaveDB() 
+        - generateScoreUpdateDBData() *pb.OperateActivityDB
+        - getSignTemplate(index int) *signTemplate
+        - getTaskTemplate(index int) *taskTemplate
+        - getShopTemplate(index int) *shopTemplate
+        - getCanReceiveReward(player IPlayer) []*pb.ItemData
+        - getCanReceiveScoreReward(player IPlayer) []*pb.ItemData
+        - isGotScoreReward(index int) bool
+        - setGotScoreRewardRecord(index int) 
+
+    }
+    class ActivityMgr << (S,Aquamarine) >> {
+        - player IPlayer
+        - areaId int32
+        - channel int32
+        - registerTime int64
+        - activityMap <font color=blue>map</font>[int64]*Activity
+        - changStatusCallback ActivityDataCmdFun
+
+        - getPlayer() IPlayer
+        - getPlayerId() int32
+        - getArea() int32
+        - getChannel() int32
+        - getRegisterTime() int64
+        - callActivityDataCmdFun(activityId int64, updateInfo *pb.OperateActivityDB, cmd DataCmd) 
+        - init(initData <font color=blue>map</font>[int64]*pb.OperateActivityDB) 
+        - dbBatchDelete(deleteList []*pb.OperateActivityDB) error
+        - dbBatchAdd(addList []*pb.OperateActivityDB) error
+        - initActivity(initData <font color=blue>map</font>[int64]*pb.OperateActivityDB) 
+        - generateActivityCommonData(conf *pb.OperateActivity) *pb.OperateActivityDB
+        - checkAndAddGlobalActivity() 
+        - checkDeleteActivity() 
+        - checkExpire(conf *pb.OperateActivity) bool
+        - checkAddCondition(activity *pb.OperateActivity) bool
+        - addActivityList(list []*pb.OperateActivityDB) 
+        - rangeAll(f <font color=blue>func</font>(*Activity) ) 
+        - getActivity(activityId int64) *Activity
+        - getStartActivity(activityId int64) *Activity
+        - checkArea(activity *pb.OperateActivity) bool
+        - checkChannel(activity *pb.OperateActivity) bool
+
+        + Add(conf *pb.OperateActivity) bool
+        + CheckNewAndDelete() 
+        + Delete(activityId int64) bool
+        + RangeAllOpen(f <font color=blue>func</font>(*Activity) ) 
+        + Login() error
+        + TriggerCondition(f <font color=blue>func</font>(*pb.Condition, *pb.OperateTaskInfo) bool) 
+        + Sign(activityId int64, index int) error
+        + SignRepair(activityId int64, index int) error
+        + GetTaskReward(activityId int64, index int, taskIndex int32) error
+        + ShopBuyGoods(activityId int64, index int, goodsIndex int) error
+        + GetScoreReward(activityId int64, index int) error
+        + PackAllOpenActivity() *pb.OperateGetListS2C
+        + PackOneActivity(activityId int64) *pb.OperateNewS2C
+
+    }
+    interface IActivityTime  {
+        - getStartTime() int64
+        - getPredictionTime() int64
+        - getCloseTime() int64
+        - getEndTime() int64
+
+    }
+    interface IPlayer  {
+        + GetId() int32
+        + OperateCheckCost(cost []*pb.ItemData) error
+        + OperateAddReward(items []*pb.ItemData) error
+        + OperateSubCost(cost []*pb.ItemData) error
+        + OperateSendMail(items []*pb.ItemData) error
+
+    }
+    class activityTimeAbs << (S,Aquamarine) >> {
+        - getPredictionTime() int64
+        - getStartTime() int64
+        - getCloseTime() int64
+        - getEndTime() int64
+
+    }
+    class activityTimeBase << (S,Aquamarine) >> {
+        - registerTime int64
+        - areaId int32
+
+    }
+    class activityTimeOpenServer << (S,Aquamarine) >> {
+        - getPredictionTime() int64
+        - getStartTime() int64
+        - getCloseTime() int64
+        - getEndTime() int64
+        - getOpenServerTime() int64
+
+    }
+    class activityTimeRegister << (S,Aquamarine) >> {
+        - getPredictionTime() int64
+        - getStartTime() int64
+        - getCloseTime() int64
+        - getEndTime() int64
+
+    }
+    class baseTemplate << (S,Aquamarine) >> {
+        - day int32
+        - index int32
+        - conf *pb.ActivityTemplate
+        - activity *Activity
+        - dbData *pb.ActivityTemplateDB
+
+        - init(template iTemplate) 
+        - initData() 
+        - getType() pb.ActivityTemplateType
+        - getCanReceiveReward() []*pb.ItemData
+        - getDay() int32
+        - getIndex() int32
+        - rangeTasks(_ RangeTaskFunType) 
+        - getDbData() *pb.ActivityTemplateDB
+
+    }
+    interface iTemplate  {
+        - getDay() int32
+        - getIndex() int32
+        - getType() pb.ActivityTemplateType
+        - getCanReceiveReward() []*pb.ItemData
+        - rangeTasks(f RangeTaskFunType) 
+        - getDbData() *pb.ActivityTemplateDB
+        - initData() 
+
+    }
+    class player.ActivityDataCmdFun << (T, #FF7700) >>  {
+    }
+    class player.DataCmd << (T, #FF7700) >>  {
+    }
+    class player.DataCmdFun << (T, #FF7700) >>  {
+    }
+    class player.RangeTaskFunType << (T, #FF7700) >>  {
+    }
+    class player.newTemplateFunc << (T, #FF7700) >>  {
+    }
+    class shopTemplate << (S,Aquamarine) >> {
+        - initData() 
+        - getShopConf() *pb.ConsumptionTemplate
+        - getShopData() *pb.ConsumptionTemplateDB
+        - buy(player IPlayer, goodsIndex int) error
+        - saveDB() 
+        - generateUpdateData() *pb.OperateActivityDB
+
+    }
+    class signTemplate << (S,Aquamarine) >> {
+        - initData() 
+        - getSignConf() *pb.SignInTemplate
+        - getSignData() *pb.SignInTemplateDB
+        - rangeTasks(f RangeTaskFunType) 
+        - saveDB() 
+        - generateUpdateData() *pb.OperateActivityDB
+        - isLoginTrigger() bool
+        - canSignDay() int32
+        - sign(player IPlayer) error
+        - checkSignCondition(player IPlayer) error
+        - repair(player IPlayer) error
+        - getCanSignCount() int32
+        - getCantRepairCount() int32
+        - addSignReward(player IPlayer) error
+        - repairCondition(player IPlayer) error
+
+    }
+    class taskTemplate << (S,Aquamarine) >> {
+        - initData() 
+        - getTaskConf() *pb.ConditionTemplate
+        - getTaskData() *pb.ConditionTemplateDB
+        - getTaskInfo(taskId int32) *pb.OperateTaskInfo
+        - finishTask(player IPlayer, taskId int32) error
+        - rangeTasks(f RangeTaskFunType) 
+        - getCanReceiveReward() []*pb.ItemData
+        - saveDB() 
+        - generateUpdateData() *pb.OperateActivityDB
+
+    }
+    class templateMgr << (S,Aquamarine) >> {
+        - register(tt pb.ActivityTemplateType, f newTemplateFunc) 
+        - newTemplate(day int32, index int32, conf *pb.ActivityTemplate, activity *Activity, dbData *pb.ActivityTemplateDB) iTemplate
+
+    }
+    class "<font color=blue>func</font>(int32, int32, *pb.ActivityTemplate, *Activity, *pb.ActivityTemplateDB) iTemplate" as fontcolorbluefuncfontint32int32pbActivityTemplateActivitypbActivityTemplateDBiTemplate {
+        'This class was created so that we can correctly have an alias pointing to this name. Since it contains dots that can break namespaces
+    }
+    class "<font color=blue>func</font>(int32, int64, DataCmd, *pb.OperateActivityDB) " as fontcolorbluefuncfontint32int64DataCmdpbOperateActivityDB {
+        'This class was created so that we can correctly have an alias pointing to this name. Since it contains dots that can break namespaces
+    }
+    class "<font color=blue>func</font>(*pb.Condition, *pb.OperateTaskInfo) bool" as fontcolorbluefuncfontpbConditionpbOperateTaskInfobool {
+        'This class was created so that we can correctly have an alias pointing to this name. Since it contains dots that can break namespaces
+    }
+    class "<font color=blue>func</font>(*pb.OperateActivity, DataCmd) " as fontcolorbluefuncfontpbOperateActivityDataCmd {
+        'This class was created so that we can correctly have an alias pointing to this name. Since it contains dots that can break namespaces
+    }
+}
+"player.activityTimeBase" *-- "player.activityTimeAbs"
+"pb.OperateActivity" *-- "player.activityTimeBase"
+"player.activityTimeBase" *-- "player.activityTimeOpenServer"
+"player.activityTimeBase" *-- "player.activityTimeRegister"
+"player.baseTemplate" *-- "player.shopTemplate"
+"player.baseTemplate" *-- "player.signTemplate"
+"player.baseTemplate" *-- "player.taskTemplate"
+"sync.Map" *-- "player.templateMgr"
+
+"player.IActivityTime" <|-- "player.activityTimeAbs"
+"player.IActivityTime" <|-- "player.activityTimeOpenServer"
+"player.IActivityTime" <|-- "player.activityTimeRegister"
+"player.iTemplate" <|-- "player.baseTemplate"
+
+"__builtin__.int" #.. "player.DataCmd"
+"player.fontcolorbluefuncfontpbConditionpbOperateTaskInfobool" #.. "player.RangeTaskFunType"
+"player.fontcolorbluefuncfontpbOperateActivityDataCmd" #.. "player.DataCmdFun"
+"player.fontcolorbluefuncfontint32int32pbActivityTemplateActivitypbActivityTemplateDBiTemplate" #.. "player.newTemplateFunc"
+"player.fontcolorbluefuncfontint32int64DataCmdpbOperateActivityDB" #.. "player.ActivityDataCmdFun"
+@enduml
