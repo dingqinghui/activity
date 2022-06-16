@@ -60,6 +60,25 @@ func TestGlobal(t *testing.T) {
 }
 
 // /////////////////////////////////////////////////////////////////玩家//////////////////////////////////////////////////////////////////////////
+func TestPlayer(t *testing.T) {
+	p := newPlayer()
+	// 玩家登录
+	_ = p.GetOperate().Login()
+	// 签到
+	_ = p.GetOperate().Sign(1, 1)
+
+	// 其他接口
+
+	// 触发任务
+	p.GetOperate().TriggerCondition(func(conf *pb.Condition, taskInfo *pb.OperateTaskInfo) bool {
+		if taskInfo.GetTaskState() != pb.OperateTaskState_OTS_Doing {
+			return false
+		}
+		// 触发
+		// 返回true 触发成功进行数据存档
+		return true
+	})
+}
 
 func newPlayer() *player {
 	p := &player{}
@@ -120,8 +139,9 @@ func (p *player) GetOperate() *player2.ActivityMgr {
 // PlayerActivityDataUpdate
 // @Description: 玩家数据更改回调函数
 // @param playerId
-// @param activity
+// @param activityId
 // @param cmd
+// @param updateInfo  当cmd == DataAdd时，updateInfo为活动完整DB数据，当cmd == DataUpdate，updateInfo为活动更改数据,未更改的数据赋值为nil
 //
 func PlayerActivityDataUpdate(playerId int32, activityId int64, cmd player2.DataCmd, updateInfo *pb.OperateActivityDB) {
 	switch cmd {
@@ -131,23 +151,4 @@ func PlayerActivityDataUpdate(playerId int32, activityId int64, cmd player2.Data
 		// 删除玩家db数据
 	default:
 	}
-}
-func TestPlayer(t *testing.T) {
-	p := newPlayer()
-	// 玩家登录
-	_ = p.GetOperate().Login()
-	// 签到
-	_ = p.GetOperate().Sign(1, 1)
-
-	// 其他接口
-
-	// 触发任务
-	p.GetOperate().TriggerCondition(func(conf *pb.Condition, taskInfo *pb.OperateTaskInfo) bool {
-		if taskInfo.GetTaskState() != pb.OperateTaskState_OTS_Doing {
-			return false
-		}
-		// 触发
-		// 返回true 触发成功进行数据存档
-		return true
-	})
 }
