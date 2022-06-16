@@ -10,7 +10,6 @@ package global
 
 import (
 	"github.com/dingqinghui/activity/pb"
-	"go.uber.org/zap"
 )
 
 //
@@ -70,12 +69,12 @@ func GetAreaRegisterTime(areaId int32) int64 {
 // @param artCb 获取区服开服时间函数
 // @param l  日志处理器
 //
-func Init(initData []*pb.OperateActivity, dataCallback DataCmdFun, artCb AreaRegisterTimeFun, l *zap.Logger) {
+func Init(initData []*pb.OperateActivity, dataCallback DataCmdFun, artCb AreaRegisterTimeFun, logOpts ...LogOption) {
 	getGlobalOperateActivityMgr().init(initData, dataCallback)
 
-	Logger = l
-
 	areaRegisterTimeCb = artCb
+
+	getLogger().init(logOpts...)
 }
 
 //
