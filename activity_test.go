@@ -9,9 +9,7 @@
 package activity
 
 import (
-	"github.com/dingqinghui/activity/global"
 	"github.com/dingqinghui/activity/pb"
-	player2 "github.com/dingqinghui/activity/player"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"testing"
@@ -24,11 +22,11 @@ import (
 // @param activity
 // @param cmd
 //
-func GlobalActivityDataUpdate(activity *pb.OperateActivity, cmd global.DataCmd) {
+func GlobalActivityDataUpdate(activity *pb.OperateActivity, cmd DataCmd) {
 	switch cmd {
-	case global.DataAdd:
+	case DataAdd:
 
-	case global.DataDelete:
+	case DataDelete:
 		// 活动结束,删除db数据
 	default:
 	}
@@ -41,22 +39,22 @@ func GlobalActivityDataUpdate(activity *pb.OperateActivity, cmd global.DataCmd) 
 // @return int64
 //
 func GetAreaStartTime(int32) int64 {
-	return global.NowTimestamp()
+	return nowTimestamp()
 }
 func TestGlobal(t *testing.T) {
 	// 全局数据初始化
-	global.Init(nil, GlobalActivityDataUpdate, GetAreaStartTime, nil)
-	global.Init(nil, GlobalActivityDataUpdate, GetAreaStartTime, global.WithLogger(zap.New(zapcore.NewTee())))
-	global.Init(nil, GlobalActivityDataUpdate, GetAreaStartTime, global.WithLogConfig("", zap.DebugLevel))
+	Init(nil, GlobalActivityDataUpdate, GetAreaStartTime, nil)
+	Init(nil, GlobalActivityDataUpdate, GetAreaStartTime, WithLogger(zap.New(zapcore.NewTee())))
+	Init(nil, GlobalActivityDataUpdate, GetAreaStartTime, WithLogConfig("", zap.DebugLevel))
 
 	// 添加活动
-	global.Add(&pb.OperateActivity{})
+	Add(&pb.OperateActivity{})
 	// 删除活动
-	global.Delete(1)
+	Delete(1)
 	// 设置时区 默认东八区
-	global.SetTimeZero(8)
+	SetTimeZero(8)
 	// 设置每日更新时间(每日几点算跨天)
-	global.SetEverydayUpdateHour(8)
+	SetEverydayUpdateHour(8)
 }
 
 // /////////////////////////////////////////////////////////////////玩家//////////////////////////////////////////////////////////////////////////
@@ -87,7 +85,7 @@ func newPlayer() *player {
 }
 
 type player struct {
-	operate *player2.ActivityMgr
+	operate *PlayerActivityMgr
 }
 
 func (p *player) GetId() int32 {
@@ -126,10 +124,10 @@ func (p *player) tick() {
 	}
 }
 
-func (p *player) GetOperate() *player2.ActivityMgr {
+func (p *player) GetOperate() *PlayerActivityMgr {
 	if p.operate == nil {
 		// 创建玩家运营活动模块
-		p.operate = player2.NewActivityMgr(p, 101, 10001, global.NowTimestamp(),
+		p.operate = NewPlayerActivityMgr(p, 101, 10001, nowTimestamp(),
 			PlayerActivityDataUpdate, nil)
 	}
 	return p.operate
@@ -143,11 +141,11 @@ func (p *player) GetOperate() *player2.ActivityMgr {
 // @param cmd
 // @param updateInfo  当cmd == DataAdd时，updateInfo为活动完整DB数据，当cmd == DataUpdate，updateInfo为活动更改数据,未更改的数据赋值为nil
 //
-func PlayerActivityDataUpdate(playerId int32, activityId int64, cmd player2.DataCmd, updateInfo *pb.OperateActivityDB) {
+func PlayerActivityDataUpdate(playerId int32, activityId int64, cmd DataCmd, updateInfo *pb.OperateActivityDB) {
 	switch cmd {
-	case player2.DataAdd, player2.DataUpdate:
+	case DataAdd, DataUpdate:
 		// 更新玩家db数据
-	case player2.DataDelete:
+	case DataDelete:
 		// 删除玩家db数据
 	default:
 	}

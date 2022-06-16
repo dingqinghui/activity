@@ -6,7 +6,7 @@
  * @Date: 2022/6/1 10:06
  */
 
-package global
+package activity
 
 import (
 	"github.com/dingqinghui/activity/pb"
@@ -33,21 +33,6 @@ var (
 var (
 	globalOperateActivityMgr *operatorActivityMgr
 	onceActivityMgr          sync.Once
-)
-
-type (
-	// DataCmd 活动数据操作
-	DataCmd int
-	// DataCmdFun 活动数据操作回调函数
-	DataCmdFun func(activity *pb.OperateActivity, cmd DataCmd)
-)
-
-// 数据操作指令
-var (
-	// DataAdd 添加活动
-	DataAdd DataCmd = 1
-	// DataDelete 删除活动
-	DataDelete DataCmd = 2
 )
 
 //
@@ -108,14 +93,14 @@ func (m *operatorActivityMgr) batchDelete(deleteList []*pb.OperateActivity) erro
 	for _, activity := range deleteList {
 		m.activityMap.Delete(activity.GetId())
 		m.callDataCmdFun(activity, DataDelete)
-		LogInfo("db删除过期运营活动数据", zap.Int64("activityId", activity.GetId()))
+		logInfo("db删除过期运营活动数据", zap.Int64("activityId", activity.GetId()))
 	}
 	return nil
 }
 
 func (m *operatorActivityMgr) delete(activityId int64) {
 	m.activityMap.Delete(activityId)
-	LogInfo("删除运营活动数据", zap.Int64("activityId", activityId))
+	logInfo("删除运营活动数据", zap.Int64("activityId", activityId))
 }
 
 func (m *operatorActivityMgr) callDataCmdFun(activity *pb.OperateActivity, cmd DataCmd) {
@@ -135,13 +120,13 @@ func (m *operatorActivityMgr) callDataCmdFun(activity *pb.OperateActivity, cmd D
 func (m *operatorActivityMgr) addCache(pActivity *pb.OperateActivity) bool {
 	activity := m.getActivity(pActivity.GetId())
 	if activity != nil {
-		LogError("添加失败已经存在运营活动实例", zap.Int64("activityId", pActivity.GetId()))
+		logError("添加失败已经存在运营活动实例", zap.Int64("activityId", pActivity.GetId()))
 		return false
 	}
 	m.callDataCmdFun(activity, DataAdd)
 	m.activityMap.Store(pActivity.GetId(), pActivity)
 
-	LogInfo("添加运营活动实例成功", zap.Int64("activityId", pActivity.GetId()), zap.Any("activity", pActivity))
+	logInfo("添加运营活动实例成功", zap.Int64("activityId", pActivity.GetId()), zap.Any("activity", pActivity))
 	return true
 }
 
@@ -159,7 +144,7 @@ func (m *operatorActivityMgr) rangeAll(f func(*pb.OperateActivity)) {
 	m.activityMap.Range(func(key, value interface{}) bool {
 		activity, ok := value.(*pb.OperateActivity)
 		if !ok {
-			LogError("invalid activity data type", zap.String("dataType", reflect.TypeOf(activity).String()))
+			logError("invalid activity data type", zap.String("dataType", reflect.TypeOf(activity).String()))
 			return true
 		}
 		if m.checkExpire(activity) {
@@ -186,7 +171,7 @@ func (m *operatorActivityMgr) getActivity(activityId int64) *pb.OperateActivity 
 	}
 	activity, ok := value.(*pb.OperateActivity)
 	if !ok {
-		LogError("invalid activity data type", zap.String("dataType", reflect.TypeOf(activity).String()))
+		logError("invalid activity data type", zap.String("dataType", reflect.TypeOf(activity).String()))
 		return nil
 	}
 	deleteList := make([]*pb.OperateActivity, 0, 0)
@@ -208,5 +193,5 @@ func (m *operatorActivityMgr) checkExpire(activity *pb.OperateActivity) bool {
 	if activity.GetTimeType() != pb.OperateActivityTimeType_ABSOLUTE_TIME {
 		return false
 	}
-	return NowTimestamp() >= activity.GetEndTime()
+	return nowTimestamp() >= activity.GetEndTime()
 }

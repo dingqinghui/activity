@@ -6,7 +6,7 @@
  * @Date: 2022/6/1 16:17
  */
 
-package player
+package activity
 
 import (
 	"github.com/dingqinghui/activity/pb"

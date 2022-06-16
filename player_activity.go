@@ -6,11 +6,10 @@
  * @Date: 2022/6/6 12:04
  */
 
-package player
+package activity
 
 import (
 	"errors"
-	"github.com/dingqinghui/activity/global"
 	"github.com/dingqinghui/activity/pb"
 	"go.uber.org/zap"
 )
@@ -35,14 +34,14 @@ var (
 	DataUpdate DataCmd = 3
 )
 
-func newActivity(dbData *pb.OperateActivityDB, mgr *ActivityMgr) (*Activity, error) {
+func newActivity(dbData *pb.OperateActivityDB, mgr *PlayerActivityMgr) (*Activity, error) {
 	if mgr == nil {
 		return nil, errors.New("mgr is nil")
 	}
 	if dbData == nil {
 		return nil, errors.New("db data is nil")
 	}
-	conf := global.GetActivity(dbData.GetActivityId())
+	conf := GetActivity(dbData.GetActivityId())
 	if conf == nil {
 		return nil, errors.New("conf is nil")
 	}
@@ -68,7 +67,7 @@ type Activity struct {
 	// m
 	// @Description: 所属管理器
 	//
-	mgr *ActivityMgr
+	mgr *PlayerActivityMgr
 	//
 	// templates
 	// @Description: 活动模板处理器
@@ -170,7 +169,7 @@ func (m *Activity) getDbData() *pb.OperateActivityDB {
 func (m *Activity) addTemplate(day int32, index int32, tplConf *pb.ActivityTemplate, dbData *pb.ActivityTemplateDB) iTemplate {
 	t := newTemplate(day, index, tplConf, m, dbData)
 	m.templates[day] = append(m.templates[day], t)
-	global.LogInfo("activity add template", zap.Int32("playerId", m.mgr.getPlayerId()), zap.Int64("activityId", m.getId()), zap.Any("tpl", tplConf))
+	logInfo("activity add template", zap.Int32("playerId", m.mgr.getPlayerId()), zap.Int64("activityId", m.getId()), zap.Any("tpl", tplConf))
 	return t
 }
 
@@ -212,7 +211,7 @@ func (m *Activity) invalid() error {
 // @return int32
 //
 func (m *Activity) openDay() int32 {
-	return int32(global.DiffDayNum(global.NowTimestamp(), m.timeTool.getStartTime()))
+	return int32(diffDayNum(nowTimestamp(), m.timeTool.getStartTime()))
 }
 
 //
@@ -222,7 +221,7 @@ func (m *Activity) openDay() int32 {
 // @return bool true:过期
 //
 func (m *Activity) isExpire() bool {
-	return global.NowTimestamp() >= m.timeTool.getCloseTime()
+	return nowTimestamp() >= m.timeTool.getCloseTime()
 }
 
 //
@@ -284,7 +283,7 @@ func (m *Activity) rangeTemplates(f func(template iTemplate)) {
 // @return bool
 //
 func (m *Activity) isOpenTime() bool {
-	nowTime := global.NowTimestamp()
+	nowTime := nowTimestamp()
 	return m.timeTool.getStartTime() <= nowTime && nowTime <= m.timeTool.getEndTime()
 }
 
@@ -309,7 +308,7 @@ func (m *Activity) rangeAllCondition(f RangeTaskFunType) {
 	}
 	// 只触发开启的活动
 	if err := m.invalid(); err != nil {
-		global.LogInfo("活动不可用", zap.Error(err), zap.Int32("playerId", m.mgr.getPlayerId()), zap.Int64("activityId", m.getId()))
+		logInfo("活动不可用", zap.Error(err), zap.Int32("playerId", m.mgr.getPlayerId()), zap.Int64("activityId", m.getId()))
 		return
 	}
 	m.rangeTemplates(func(template iTemplate) {

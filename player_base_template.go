@@ -6,7 +6,7 @@
  * @Date: 2022/6/15 14:52
  */
 
-package player
+package activity
 
 import (
 	"errors"

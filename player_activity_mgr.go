@@ -6,11 +6,10 @@
  * @Date: 2022/5/31 17:33
  */
 
-package player
+package activity
 
 import (
 	"errors"
-	"github.com/dingqinghui/activity/global"
 	"github.com/dingqinghui/activity/pb"
 	"go.uber.org/zap"
 )
@@ -23,8 +22,8 @@ var (
 	templateNotExist = errors.New("template not exist")
 )
 
-// ActivityDataCmdFun 活动数据操作回调函数
-type ActivityDataCmdFun func(playerId int32, activityId int64, cmd DataCmd, updateInfo *pb.OperateActivityDB)
+// PlayerDataCmdFun 活动数据操作回调函数
+type PlayerDataCmdFun func(playerId int32, activityId int64, cmd DataCmd, updateInfo *pb.OperateActivityDB)
 
 //
 // IPlayer
@@ -39,7 +38,7 @@ type IPlayer interface {
 }
 
 //
-// NewActivityMgr
+// NewPlayerActivityMgr
 // @Description: 创建玩家活动管理器
 // @param player 玩家对象
 // @param areaId 玩家所属区服
@@ -47,14 +46,14 @@ type IPlayer interface {
 // @param registerTime 玩家注册时间
 // @param changeDataCallback
 // @param initData
-// @return *ActivityMgr
+// @return *PlayerActivityMgr
 //
-func NewActivityMgr(player IPlayer, areaId int32, channel int32, registerTime int64,
-	changeDataCallback ActivityDataCmdFun, initData map[int64]*pb.OperateActivityDB) *ActivityMgr {
+func NewPlayerActivityMgr(player IPlayer, areaId int32, channel int32, registerTime int64,
+	changeDataCallback PlayerDataCmdFun, initData map[int64]*pb.OperateActivityDB) *PlayerActivityMgr {
 	if player == nil {
 		panic("operate player is nil")
 	}
-	m := &ActivityMgr{
+	m := &PlayerActivityMgr{
 		player:              player,
 		channel:             channel,
 		registerTime:        registerTime,
@@ -67,10 +66,10 @@ func NewActivityMgr(player IPlayer, areaId int32, channel int32, registerTime in
 }
 
 //
-// ActivityMgr
+// PlayerActivityMgr
 // @Description: 玩家活动管理
 //
-type ActivityMgr struct {
+type PlayerActivityMgr struct {
 	//
 	// player
 	// @Description: 玩家
@@ -100,35 +99,35 @@ type ActivityMgr struct {
 	// changStatusCallback
 	// @Description: 状态变化回调函数
 	//
-	changStatusCallback ActivityDataCmdFun
+	changStatusCallback PlayerDataCmdFun
 }
 
-func (m *ActivityMgr) getPlayer() IPlayer {
+func (m *PlayerActivityMgr) getPlayer() IPlayer {
 	return m.player
 }
 
-func (m *ActivityMgr) getPlayerId() int32 {
+func (m *PlayerActivityMgr) getPlayerId() int32 {
 	return m.player.GetId()
 }
-func (m *ActivityMgr) getArea() int32 {
+func (m *PlayerActivityMgr) getArea() int32 {
 	return m.areaId
 }
-func (m *ActivityMgr) getChannel() int32 {
+func (m *PlayerActivityMgr) getChannel() int32 {
 	return m.channel
 }
-func (m *ActivityMgr) getRegisterTime() int64 {
+func (m *PlayerActivityMgr) getRegisterTime() int64 {
 	return m.registerTime
 }
 
-func (m *ActivityMgr) callActivityDataCmdFun(activityId int64, updateInfo *pb.OperateActivityDB, cmd DataCmd) {
+func (m *PlayerActivityMgr) callActivityDataCmdFun(activityId int64, updateInfo *pb.OperateActivityDB, cmd DataCmd) {
 	if m.changStatusCallback == nil {
 		return
 	}
 	m.changStatusCallback(m.getPlayerId(), activityId, cmd, updateInfo)
-	global.LogInfo("回调活动数据操作", zap.Int32("playerId", m.getPlayerId()), zap.Any("cmd", cmd), zap.Int64("activityId", activityId), zap.Any("updateInfo", updateInfo))
+	logInfo("回调活动数据操作", zap.Int32("playerId", m.getPlayerId()), zap.Any("cmd", cmd), zap.Int64("activityId", activityId), zap.Any("updateInfo", updateInfo))
 }
 
-func (m *ActivityMgr) init(initData map[int64]*pb.OperateActivityDB) {
+func (m *PlayerActivityMgr) init(initData map[int64]*pb.OperateActivityDB) {
 	// 分离过期活动和正常活动
 	m.initActivity(initData)
 
@@ -143,7 +142,7 @@ func (m *ActivityMgr) init(initData map[int64]*pb.OperateActivityDB) {
 // @param deleteList
 // @return error
 //
-func (m *ActivityMgr) dbBatchDelete(deleteList []*pb.OperateActivityDB) error {
+func (m *PlayerActivityMgr) dbBatchDelete(deleteList []*pb.OperateActivityDB) error {
 	if len(deleteList) <= 0 {
 		return nil
 	}
@@ -168,7 +167,7 @@ func (m *ActivityMgr) dbBatchDelete(deleteList []*pb.OperateActivityDB) error {
 // @param addList
 // @return error
 //
-func (m *ActivityMgr) dbBatchAdd(addList []*pb.OperateActivityDB) error {
+func (m *PlayerActivityMgr) dbBatchAdd(addList []*pb.OperateActivityDB) error {
 	if len(addList) <= 0 {
 		return nil
 	}
@@ -185,7 +184,7 @@ func (m *ActivityMgr) dbBatchAdd(addList []*pb.OperateActivityDB) error {
 // @receiver m
 // @param initData
 //
-func (m *ActivityMgr) initActivity(initData map[int64]*pb.OperateActivityDB) {
+func (m *PlayerActivityMgr) initActivity(initData map[int64]*pb.OperateActivityDB) {
 	addList := make([]*pb.OperateActivityDB, 0, 0)
 	for _, activity := range initData {
 		addList = append(addList, activity)
@@ -194,7 +193,7 @@ func (m *ActivityMgr) initActivity(initData map[int64]*pb.OperateActivityDB) {
 	m.addActivityList(addList)
 }
 
-func (m *ActivityMgr) generateActivityCommonData(conf *pb.OperateActivity) *pb.OperateActivityDB {
+func (m *PlayerActivityMgr) generateActivityCommonData(conf *pb.OperateActivity) *pb.OperateActivityDB {
 	dbData := &pb.OperateActivityDB{
 		ActivityId:   conf.GetId(),
 		ActivityList: make(map[int32]*pb.ActivityDBList),
@@ -211,9 +210,9 @@ func (m *ActivityMgr) generateActivityCommonData(conf *pb.OperateActivity) *pb.O
 // @Description: 检测全局活动是否可添加到玩家
 // @receiver m
 //
-func (m *ActivityMgr) checkAndAddGlobalActivity() {
+func (m *PlayerActivityMgr) checkAndAddGlobalActivity() {
 	var addCacheList []*pb.OperateActivityDB
-	global.RangeAll(func(conf *pb.OperateActivity) {
+	RangeAll(func(conf *pb.OperateActivity) {
 		if m.getActivity(conf.GetId()) != nil {
 			return
 		}
@@ -238,7 +237,7 @@ func (m *ActivityMgr) checkAndAddGlobalActivity() {
 // @param activity
 // @return bool true:添加成功 false:条件不满足
 //
-func (m *ActivityMgr) Add(conf *pb.OperateActivity) bool {
+func (m *PlayerActivityMgr) Add(conf *pb.OperateActivity) bool {
 	if !m.checkAddCondition(conf) {
 		return false
 	}
@@ -258,12 +257,12 @@ func (m *ActivityMgr) Add(conf *pb.OperateActivity) bool {
 // @Description: 检测添加新活动和删除旧活动
 // @receiver m
 //
-func (m *ActivityMgr) CheckNewAndDelete() {
+func (m *PlayerActivityMgr) CheckNewAndDelete() {
 	m.checkAndAddGlobalActivity()
 	m.checkDeleteActivity()
 }
 
-func (m *ActivityMgr) checkDeleteActivity() {
+func (m *PlayerActivityMgr) checkDeleteActivity() {
 	m.rangeAll(func(activity *Activity) {
 		if !activity.isExpire() {
 			return
@@ -279,12 +278,12 @@ func (m *ActivityMgr) checkDeleteActivity() {
 // @param Activity
 // @return bool true:过期
 //
-func (m *ActivityMgr) checkExpire(conf *pb.OperateActivity) bool {
+func (m *PlayerActivityMgr) checkExpire(conf *pb.OperateActivity) bool {
 	timeTool := NewActivityTime(conf, m.getRegisterTime(), m.getArea())
 	if timeTool == nil {
 		return true
 	}
-	return global.NowTimestamp() >= timeTool.getCloseTime()
+	return nowTimestamp() >= timeTool.getCloseTime()
 }
 
 //
@@ -294,7 +293,7 @@ func (m *ActivityMgr) checkExpire(conf *pb.OperateActivity) bool {
 // @param activity
 // @return bool
 //
-func (m *ActivityMgr) checkAddCondition(activity *pb.OperateActivity) bool {
+func (m *PlayerActivityMgr) checkAddCondition(activity *pb.OperateActivity) bool {
 	// 区服
 	if !m.checkArea(activity) {
 		return false
@@ -310,7 +309,7 @@ func (m *ActivityMgr) checkAddCondition(activity *pb.OperateActivity) bool {
 	if timeTool == nil {
 		return false
 	}
-	nowTime := global.NowTimestamp()
+	nowTime := nowTimestamp()
 	if nowTime < timeTool.getPredictionTime() || nowTime > timeTool.getCloseTime() {
 		return false
 	}
@@ -324,7 +323,7 @@ func (m *ActivityMgr) checkAddCondition(activity *pb.OperateActivity) bool {
 // @param activityId 活动Id
 // @return bool
 //
-func (m *ActivityMgr) Delete(activityId int64) bool {
+func (m *PlayerActivityMgr) Delete(activityId int64) bool {
 	activity, ok := m.activityMap[activityId]
 	if !ok {
 		return false
@@ -335,7 +334,7 @@ func (m *ActivityMgr) Delete(activityId int64) bool {
 	m.callActivityDataCmdFun(activityId, nil, DataDelete)
 
 	delete(m.activityMap, activityId)
-	global.LogInfo("删除运营活动实例", zap.Int32("playerId", m.getPlayerId()), zap.Int64("activityId", activityId), zap.Any("Activity", activity))
+	logInfo("删除运营活动实例", zap.Int32("playerId", m.getPlayerId()), zap.Int64("activityId", activityId), zap.Any("Activity", activity))
 	return true
 }
 
@@ -345,18 +344,18 @@ func (m *ActivityMgr) Delete(activityId int64) bool {
 // @receiver m
 // @param list
 //
-func (m *ActivityMgr) addActivityList(list []*pb.OperateActivityDB) {
+func (m *PlayerActivityMgr) addActivityList(list []*pb.OperateActivityDB) {
 	for _, data := range list {
 		if _, ok := m.activityMap[data.GetActivityId()]; ok {
 			return
 		}
 		activity, err := newActivity(data, m)
 		if err != nil {
-			global.LogError("activity is nil", zap.Error(err))
+			logError("activity is nil", zap.Error(err))
 			continue
 		}
 		m.activityMap[activity.getId()] = activity
-		global.LogInfo("添加运营活动实例成功", zap.Int32("playerId", m.getPlayerId()), zap.Int64("id", activity.getId()))
+		logInfo("添加运营活动实例成功", zap.Int32("playerId", m.getPlayerId()), zap.Int64("id", activity.getId()))
 	}
 	return
 }
@@ -367,7 +366,7 @@ func (m *ActivityMgr) addActivityList(list []*pb.OperateActivityDB) {
 // @receiver m
 // @param f
 //
-func (m *ActivityMgr) rangeAll(f func(act *Activity)) {
+func (m *PlayerActivityMgr) rangeAll(f func(act *Activity)) {
 	if f == nil {
 		return
 	}
@@ -382,7 +381,7 @@ func (m *ActivityMgr) rangeAll(f func(act *Activity)) {
 // @receiver m
 // @param f
 //
-func (m *ActivityMgr) RangeAllOpen(f func(act *Activity)) {
+func (m *PlayerActivityMgr) RangeAllOpen(f func(act *Activity)) {
 	if f == nil {
 		return
 	}
@@ -401,7 +400,7 @@ func (m *ActivityMgr) RangeAllOpen(f func(act *Activity)) {
 // @param activityId
 // @return *Activity
 //
-func (m *ActivityMgr) getActivity(activityId int64) *Activity {
+func (m *PlayerActivityMgr) getActivity(activityId int64) *Activity {
 	activity, ok := m.activityMap[activityId]
 	if !ok {
 		return nil
@@ -416,13 +415,13 @@ func (m *ActivityMgr) getActivity(activityId int64) *Activity {
 // @param activityId
 // @return *Activity
 //
-func (m *ActivityMgr) getStartActivity(activityId int64) *Activity {
+func (m *PlayerActivityMgr) getStartActivity(activityId int64) *Activity {
 	activity, ok := m.activityMap[activityId]
 	if !ok {
 		return nil
 	}
 	if err := activity.invalid(); err != nil {
-		global.LogWarn("活动不可用", zap.Error(err), zap.Int32("playerId", m.getPlayerId()), zap.Int64("activityId", activityId))
+		logWarn("活动不可用", zap.Error(err), zap.Int32("playerId", m.getPlayerId()), zap.Int64("activityId", activityId))
 		return nil
 	}
 	return m.activityMap[activityId]
@@ -435,7 +434,7 @@ func (m *ActivityMgr) getStartActivity(activityId int64) *Activity {
 // @param area
 // @return bool true:满足
 //
-func (m *ActivityMgr) checkArea(activity *pb.OperateActivity) bool {
+func (m *PlayerActivityMgr) checkArea(activity *pb.OperateActivity) bool {
 	servers := activity.GetServers()
 	if len(servers) <= 0 {
 		return true
@@ -455,7 +454,7 @@ func (m *ActivityMgr) checkArea(activity *pb.OperateActivity) bool {
 // @param channel
 // @return bool true:满足
 //
-func (m *ActivityMgr) checkChannel(activity *pb.OperateActivity) bool {
+func (m *PlayerActivityMgr) checkChannel(activity *pb.OperateActivity) bool {
 	channels := activity.GetChannel()
 	if len(channels) <= 0 {
 		return true
@@ -477,7 +476,7 @@ func (m *ActivityMgr) checkChannel(activity *pb.OperateActivity) bool {
 // @param player
 // @return error
 //
-func (m *ActivityMgr) Login() error {
+func (m *PlayerActivityMgr) Login() error {
 	m.RangeAllOpen(func(act *Activity) {
 		act.rangeTemplates(func(template iTemplate) {
 			if template.getType() != pb.ActivityTemplateType_SIGN_IN_TYPE {
@@ -505,7 +504,7 @@ func (m *ActivityMgr) Login() error {
 // @receiver m
 // @param f
 //
-func (m *ActivityMgr) TriggerCondition(f func(conf *pb.Condition, taskInfo *pb.OperateTaskInfo) bool) {
+func (m *PlayerActivityMgr) TriggerCondition(f func(conf *pb.Condition, taskInfo *pb.OperateTaskInfo) bool) {
 	m.rangeAll(func(activity *Activity) {
 		activity.rangeAllCondition(f)
 	})
@@ -519,7 +518,7 @@ func (m *ActivityMgr) TriggerCondition(f func(conf *pb.Condition, taskInfo *pb.O
 // @param index	活动模板索引
 // @return error
 //
-func (m *ActivityMgr) Sign(activityId int64, index int) error {
+func (m *PlayerActivityMgr) Sign(activityId int64, index int) error {
 	activity := m.getStartActivity(activityId)
 	if activity == nil {
 		return activityNotExist
@@ -546,7 +545,7 @@ func (m *ActivityMgr) Sign(activityId int64, index int) error {
 // @param index 活动模板索引
 // @return error
 //
-func (m *ActivityMgr) SignRepair(activityId int64, index int) error {
+func (m *PlayerActivityMgr) SignRepair(activityId int64, index int) error {
 	activity := m.getStartActivity(activityId)
 	if activity == nil {
 		return activityNotExist
@@ -570,7 +569,7 @@ func (m *ActivityMgr) SignRepair(activityId int64, index int) error {
 // @param taskIndex 任务索引
 // @return error
 //
-func (m *ActivityMgr) GetTaskReward(activityId int64, index int, taskIndex int32) error {
+func (m *PlayerActivityMgr) GetTaskReward(activityId int64, index int, taskIndex int32) error {
 	activity := m.getStartActivity(activityId)
 	if activity == nil {
 		return activityNotExist
@@ -594,7 +593,7 @@ func (m *ActivityMgr) GetTaskReward(activityId int64, index int, taskIndex int32
 // @param goodsIndex 商品索引
 // @return error
 //
-func (m *ActivityMgr) ShopBuyGoods(activityId int64, index int, goodsIndex int) error {
+func (m *PlayerActivityMgr) ShopBuyGoods(activityId int64, index int, goodsIndex int) error {
 	activity := m.getStartActivity(activityId)
 	if activity == nil {
 		return activityNotExist
@@ -617,7 +616,7 @@ func (m *ActivityMgr) ShopBuyGoods(activityId int64, index int, goodsIndex int) 
 // @param index 活动模板索引
 // @return error
 //
-func (m *ActivityMgr) GetScoreReward(activityId int64, index int) error {
+func (m *PlayerActivityMgr) GetScoreReward(activityId int64, index int) error {
 	activity := m.getStartActivity(activityId)
 	if activity == nil {
 		return activityNotExist
@@ -634,7 +633,7 @@ func (m *ActivityMgr) GetScoreReward(activityId int64, index int) error {
 // @receiver m
 // @return *OperateGetListS2C
 //
-func (m *ActivityMgr) PackAllOpenActivity() *pb.OperateGetListS2C {
+func (m *PlayerActivityMgr) PackAllOpenActivity() *pb.OperateGetListS2C {
 	s2c := &pb.OperateGetListS2C{}
 	m.RangeAllOpen(func(activity *Activity) {
 		s2c.List = append(s2c.List, &pb.Operate{
@@ -652,7 +651,7 @@ func (m *ActivityMgr) PackAllOpenActivity() *pb.OperateGetListS2C {
 // @param activityId
 // @return *OperateNewS2C
 //
-func (m *ActivityMgr) PackOneActivity(activityId int64) *pb.OperateNewS2C {
+func (m *PlayerActivityMgr) PackOneActivity(activityId int64) *pb.OperateNewS2C {
 	activity := m.getActivity(activityId)
 	if activity != nil {
 		return nil

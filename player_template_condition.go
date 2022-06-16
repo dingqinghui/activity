@@ -6,11 +6,10 @@
  * @Date: 2022/6/7 10:30
  */
 
-package player
+package activity
 
 import (
 	"errors"
-	"github.com/dingqinghui/activity/global"
 	"github.com/dingqinghui/activity/pb"
 	"go.uber.org/zap"
 )
@@ -21,7 +20,7 @@ func init() {
 
 func newConditionTemplate(day int32, index int32, conf *pb.ActivityTemplate, activity *Activity, dbData *pb.ActivityTemplateDB) iTemplate {
 	if err := templateParameterCheck(conf, activity); err != nil {
-		global.LogError("newConditionTemplate", zap.Error(err))
+		logError("newConditionTemplate", zap.Error(err))
 		return nil
 	}
 	result := &taskTemplate{

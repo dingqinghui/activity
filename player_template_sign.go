@@ -6,11 +6,10 @@
  * @Date: 2022/6/6 10:38
  */
 
-package player
+package activity
 
 import (
 	"errors"
-	"github.com/dingqinghui/activity/global"
 	"github.com/dingqinghui/activity/pb"
 	"go.uber.org/zap"
 	"math"
@@ -22,7 +21,7 @@ func init() {
 
 func newSignTemplate(day int32, index int32, conf *pb.ActivityTemplate, activity *Activity, dbData *pb.ActivityTemplateDB) iTemplate {
 	if err := templateParameterCheck(conf, activity); err != nil {
-		global.LogError("newConditionTemplate", zap.Error(err))
+		logError("newConditionTemplate", zap.Error(err))
 		return nil
 	}
 	result := &signTemplate{
@@ -173,9 +172,9 @@ func (m *signTemplate) sign(player IPlayer) error {
 		return errors.New("sign db data is nil")
 	}
 	dbData.SignedDay += 1
-	dbData.LastSignTimestamp = global.NowTimestamp()
+	dbData.LastSignTimestamp = nowTimestamp()
 	m.saveDB()
-	global.LogInfo("签到成功", zap.Int32("playerId", player.GetId()), zap.Int64("activityId", m.activity.getId()), zap.Int32("signedDay", dbData.GetSignedDay()))
+	logInfo("签到成功", zap.Int32("playerId", player.GetId()), zap.Int64("activityId", m.activity.getId()), zap.Int32("signedDay", dbData.GetSignedDay()))
 	return nil
 }
 
@@ -189,8 +188,8 @@ func (m *signTemplate) checkSignCondition(player IPlayer) error {
 		return errors.New("sign db data is nil")
 	}
 
-	if !global.IsDifferDay(global.NowTimestamp(), dbData.GetLastSignTimestamp()) {
-		global.LogError("今日已签到", zap.Int32("playerId", player.GetId()))
+	if !isDifferDay(nowTimestamp(), dbData.GetLastSignTimestamp()) {
+		logError("今日已签到", zap.Int32("playerId", player.GetId()))
 		return errors.New("today signed")
 	}
 
@@ -202,12 +201,12 @@ func (m *signTemplate) checkSignCondition(player IPlayer) error {
 
 func (m *signTemplate) repair(player IPlayer) error {
 	if err := m.repairCondition(player); err != nil {
-		global.LogError("补签失败，条件检测失败", zap.Int32("playerId", player.GetId()))
+		logError("补签失败，条件检测失败", zap.Int32("playerId", player.GetId()))
 		return errors.New("repair sign condition ")
 	}
 
 	if err := m.addSignReward(player); err != nil {
-		global.LogError("补签失败，添加奖励失败", zap.Int32("playerId", player.GetId()), zap.Error(err))
+		logError("补签失败，添加奖励失败", zap.Int32("playerId", player.GetId()), zap.Error(err))
 		return err
 	}
 
@@ -220,7 +219,7 @@ func (m *signTemplate) repair(player IPlayer) error {
 	dbData.RepairCount += 1
 	m.saveDB()
 
-	global.LogInfo("补签成功", zap.Int32("playerId", player.GetId()), zap.Int64("activityId", m.activity.getId()),
+	logInfo("补签成功", zap.Int32("playerId", player.GetId()), zap.Int64("activityId", m.activity.getId()),
 		zap.Int32("signedDay", dbData.GetSignedDay()), zap.Int32("repairCount", dbData.GetRepairCount()))
 	return nil
 }
@@ -275,7 +274,7 @@ func (m *signTemplate) addSignReward(player IPlayer) error {
 	if int(dbData.GetSignedDay()) < len(rewards) {
 		reward := rewards[dbData.GetSignedDay()]
 		if err := player.OperateAddReward(reward.GetSignInReward()); err != nil {
-			global.LogError("签到失败",
+			logError("签到失败",
 				zap.Int32("playerId", player.GetId()),
 				zap.Int64("activityId", m.activity.getId()),
 				zap.Int32("signedDay", dbData.GetSignedDay()),
@@ -315,7 +314,7 @@ func (m *signTemplate) repairCondition(player IPlayer) error {
 	// 道具消耗补签
 	if rule.GetRSI_Expend() != nil {
 		if err := player.OperateSubCost(rule.GetRSI_Expend()); err != nil {
-			global.LogError("补签失败，道具不足", zap.Int32("playerId", player.GetId()), zap.Int32("signedDay", signedDay))
+			logError("补签失败，道具不足", zap.Int32("playerId", player.GetId()), zap.Int32("signedDay", signedDay))
 			return errors.New("repair condition not enough expend")
 		}
 		return nil
@@ -335,7 +334,7 @@ func (m *signTemplate) repairCondition(player IPlayer) error {
 	if rule.GetRSI_Condition() != nil {
 		for _, task := range condition.GetTasks() {
 			if task.GetTaskState() == pb.OperateTaskState_OTS_Doing {
-				global.LogError("补签失败，条件不满足", zap.Int32("playerId", player.GetId()), zap.Int32("signedDay", signedDay))
+				logError("补签失败，条件不满足", zap.Int32("playerId", player.GetId()), zap.Int32("signedDay", signedDay))
 				return errors.New("repair condition task not finish")
 			}
 		}

@@ -6,7 +6,7 @@
  * @Date: 2022/6/1 10:06
  */
 
-package global
+package activity
 
 import (
 	"github.com/dingqinghui/activity/pb"
@@ -56,7 +56,7 @@ func GetEverydayUpdateHour() int {
 //
 func GetAreaRegisterTime(areaId int32) int64 {
 	if areaRegisterTimeCb == nil {
-		return NowTimestamp()
+		return nowTimestamp()
 	}
 	return areaRegisterTimeCb(areaId)
 }
@@ -102,7 +102,7 @@ func Delete(activityId int64) {
 //
 func Add(activity *pb.OperateActivity) {
 	if activity == nil {
-		LogError("activity is nil")
+		logError("activity is nil")
 		return
 	}
 	getGlobalOperateActivityMgr().addCache(activity)

@@ -6,10 +6,9 @@
  * @Date: 2022/6/8 9:41
  */
 
-package player
+package activity
 
 import (
-	"github.com/dingqinghui/activity/global"
 	"github.com/dingqinghui/activity/pb"
 	"go.uber.org/zap"
 )
@@ -37,7 +36,7 @@ func NewActivityTime(activity *pb.OperateActivity, registerTime int64, areaId in
 	case pb.OperateActivityTimeType_ABSOLUTE_TIME:
 		return &activityTimeAbs{base}
 	default:
-		global.LogWarn("invalid activity time type", zap.String("type", activity.GetTimeType().String()))
+		logWarn("invalid activity time type", zap.String("type", activity.GetTimeType().String()))
 	}
 	return nil
 }
@@ -115,5 +114,5 @@ func (m *activityTimeOpenServer) getEndTime() int64 {
 }
 
 func (m *activityTimeOpenServer) getOpenServerTime() int64 {
-	return global.GetAreaRegisterTime(m.areaId)
+	return GetAreaRegisterTime(m.areaId)
 }

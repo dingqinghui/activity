@@ -6,7 +6,7 @@
  * @Date: 2022/5/31 18:07
  */
 
-package global
+package activity
 
 import (
 	"github.com/natefinch/lumberjack"
@@ -106,7 +106,7 @@ func (m *logger) getLogger() *zap.Logger {
 	return m.Logger
 }
 
-func LogDebug(msg string, fields ...zap.Field) {
+func logDebug(msg string, fields ...zap.Field) {
 	if log.getLogger() == nil {
 		println(msg)
 		return
@@ -114,7 +114,7 @@ func LogDebug(msg string, fields ...zap.Field) {
 	log.Debug(msg, append(fields, zap.String("operate", ""))...)
 }
 
-func LogInfo(msg string, fields ...zap.Field) {
+func logInfo(msg string, fields ...zap.Field) {
 	if log.getLogger() == nil {
 		println(msg)
 		return
@@ -122,7 +122,7 @@ func LogInfo(msg string, fields ...zap.Field) {
 	log.Info(msg, append(fields, zap.String("operate", ""))...)
 }
 
-func LogWarn(msg string, fields ...zap.Field) {
+func logWarn(msg string, fields ...zap.Field) {
 	if log.getLogger() == nil {
 		println(msg)
 		return
@@ -130,7 +130,7 @@ func LogWarn(msg string, fields ...zap.Field) {
 	log.Warn(msg, append(fields, zap.String("operate", ""))...)
 }
 
-func LogError(msg string, fields ...zap.Field) {
+func logError(msg string, fields ...zap.Field) {
 	if log.getLogger() == nil {
 		println(msg)
 		return
@@ -138,7 +138,7 @@ func LogError(msg string, fields ...zap.Field) {
 	log.Error(msg, append(fields, zap.String("operate", ""))...)
 }
 
-func LogDPanic(msg string, fields ...zap.Field) {
+func logDPanic(msg string, fields ...zap.Field) {
 	if log.getLogger() == nil {
 		println(msg)
 		return
