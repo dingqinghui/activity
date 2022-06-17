@@ -75,19 +75,20 @@ func (m *shopTemplate) buy(player IPlayer, goodsIndex int) error {
 		return errors.New("goods limit")
 	}
 
-	var costs []*pb.ItemData
-	for _, item := range goodsConf.GetExpend() {
-		costs = append(costs, &pb.ItemData{
-			Id:  item.GetId(),
-			Num: item.Num * goodsConf.GetDiscount() / 100,
-		})
-	}
+	//var costs []*pb.ItemData
+	//for _, item := range goodsConf.GetExpend() {
+	//	costs = append(costs, &pb.ItemData{
+	//		Id:  item.GetId(),
+	//		Num: item.Num * goodsConf.GetDiscount() / 100,
+	//	})
+	//}
+
 	// 检测消耗
-	if err := player.OperateCheckCost(costs); err != nil {
+	if err := player.OperateCheckCost(goodsConf.GetExpend()); err != nil {
 		return err
 	}
 	// 扣除消耗
-	if err := player.OperateSubCost(costs); err != nil {
+	if err := player.OperateSubCost(goodsConf.GetExpend()); err != nil {
 		return err
 	}
 	// 添加奖励

@@ -20,9 +20,7 @@ var dateTimeFormat = "2006-01-02 15:04:05"
 // @return int64
 //
 func nowTimestamp() int64 {
-	curTime := time.Now()
-	nowTick := curTime.UnixNano() / 1e6
-	return nowTick / 1e3
+	return time.Now().Unix()
 }
 
 //
