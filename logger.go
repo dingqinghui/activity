@@ -38,7 +38,10 @@ func WithLogConfig(logPath string, logLevel zapcore.Level) LogOption {
 
 func getLogger() *logger {
 	onceLogger.Do(func() {
-		log = new(logger)
+		log = &logger{
+			logLevel: zap.DebugLevel,
+			logPath:  "./activityLog",
+		}
 	})
 	return log
 }

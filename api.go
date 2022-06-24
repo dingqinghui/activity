@@ -70,11 +70,11 @@ func GetAreaRegisterTime(areaId int32) int64 {
 // @param l  日志处理器
 //
 func Init(initData []*pb.OperateActivity, dataCallback DataCmdFun, artCb AreaRegisterTimeFun, logOpts ...LogOption) {
+	getLogger().init(logOpts...)
+
 	getGlobalOperateActivityMgr().init(initData, dataCallback)
 
 	areaRegisterTimeCb = artCb
-
-	getLogger().init(logOpts...)
 }
 
 //
