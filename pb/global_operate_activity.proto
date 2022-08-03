@@ -28,7 +28,7 @@ message ItemData {
 }
 
 // 图片信息
-message Image {
+message ActivityImage {
     string                          Id = 1;             // 图片ID
     string                          Name = 2;           // 图片名字
     string                          Status = 3;         // 图片状态
@@ -51,8 +51,8 @@ message OperateActivity {
     string                          ActivityName = 9;           // 活动名字
     string                          ActivityTitle = 10;         // 活动标题
     string                          ActivityDescription = 11;   // 活动描述
-    Image                           BackgroundImgUrl = 12;      // 活动背景图地址
-    Image                           TitleImgUrl = 13;           // 活动标题图地址
+    ActivityImage                   BackgroundImgUrl = 12;      // 活动背景图地址
+    ActivityImage                   TitleImgUrl = 13;           // 活动标题图地址
 
     bool                            IsNestedActivity = 14;      // 是否开启时间嵌套活动
     map<int32, ActivityList>        ActivityList = 15;          // 活动模板ID组

@@ -68,11 +68,13 @@ type Activity struct {
 	// @Description: 所属管理器
 	//
 	mgr *PlayerActivityMgr
+
 	//
 	// templates
 	// @Description: 活动模板处理器
 	//
 	templates map[int32][]iTemplate
+
 	//
 	// timeTool
 	// @Description: 活动时间处理器
