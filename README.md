@@ -42,5 +42,19 @@ signTemplate：签到模板实现
 
 
 
-<img src="https://s2.loli.net/2022/08/03/PZzG4CliEgB25Ix.png" alt="image-20220803180649403"  />
+
+
+全局模块：
+
+![image-20220808102515613](https://s2.loli.net/2022/08/08/mESJhytX3DQ8Pir.png)
+
+
+
+
+
+
+
+玩家操作：
+
+![image-20220808102502069](https://s2.loli.net/2022/08/08/dorcLpSP6fzGCxb.png)
 
