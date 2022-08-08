@@ -159,3 +159,8 @@ func PlayerActivityDataUpdate(playerId int32, activityId int64, cmd DataCmd, upd
 ![image-20220808102502069](https://s2.loli.net/2022/08/08/dorcLpSP6fzGCxb.png)
 
 详细测试代码见 activity_test.go
+
+
+
+
+
