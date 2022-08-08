@@ -145,8 +145,10 @@ func PlayerActivityDataUpdate(playerId int32, activityId int64, cmd DataCmd, upd
 	switch cmd {
 	case DataAdd, DataUpdate:
 		// 更新玩家db数据
+		// 通知客户端
 	case DataDelete:
 		// 删除玩家db数据
+		// 通知客户端
 	default:
 	}
 }

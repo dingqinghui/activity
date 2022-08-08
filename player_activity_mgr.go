@@ -22,7 +22,7 @@ var (
 	templateNotExist = errors.New("template not exist")
 )
 
-// PlayerDataCmdFun 活动数据操作回调函数
+// PlayerDataCmdFun 活动数据操作回调函数，当cmd == DataAdd时，updateInfo为活动完整DB数据，当cmd == DataUpdate，updateInfo为活动更改数据,未更改的数据赋值为nil
 type PlayerDataCmdFun func(playerId int32, activityId int64, cmd DataCmd, updateInfo *pb.OperateActivityDB)
 
 //
@@ -44,7 +44,7 @@ type IPlayer interface {
 // @param areaId 玩家所属区服
 // @param channel 玩家所属渠道
 // @param registerTime 玩家注册时间
-// @param changeDataCallback
+// @param changeDataCallback 玩家数据更改回调
 // @param initData
 // @return *PlayerActivityMgr
 //
