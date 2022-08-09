@@ -47,14 +47,14 @@ message OperateGetTaskRewardC2S
 {
      int64  activityId        = 1;   // 活动Id
      int32 tplIndex           = 2;   // 模板索引
-     repeated int32 taskIds   = 3;   //条目id
+     repeated int32 taskIndexs = 3;   //条目id
 }
 //领取运营任务奖励
 message OperateGetTaskRewardS2C
 {
      int64  activityId        = 1;   // 活动Id
      int32 tplIndex           = 2;   // 模板索引
-     repeated int32 taskIds   = 3;   //条目id
+     repeated int32 taskIndexs   = 3;   //条目id
 }
 
 
