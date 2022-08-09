@@ -562,7 +562,7 @@ func (m *PlayerActivityMgr) SignRepair(activityId int64, index int) error {
 
 //
 // GetTaskReward
-// @Description: 获取签到奖励
+// @Description: 领取任务奖励
 // @receiver m
 // @param activityId 活动Id
 // @param index 活动模板索引

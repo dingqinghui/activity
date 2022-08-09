@@ -164,6 +164,26 @@ func PlayerActivityDataUpdate(playerId int32, activityId int64, cmd DataCmd, upd
 
 ![image-20220808102502069](https://s2.loli.net/2022/08/08/dorcLpSP6fzGCxb.png)
 
+
+
+
+
+#####  任务触发接入
+
+```go
+// 触发任务
+p.GetOperate().TriggerCondition(func(conf *pb.Condition, taskInfo *pb.OperateTaskInfo) bool {
+   if taskInfo.GetTaskState() != pb.OperateTaskState_OTS_Doing {
+      return false
+   }
+   // 触发
+   // 返回true 触发成功进行数据存档
+   return true
+})
+```
+
+
+
 详细测试代码见 activity_test.go
 
 
