@@ -34,29 +34,6 @@ var (
 	DataUpdate DataCmd = 3
 )
 
-func newActivity(dbData *pb.OperateActivityDB, mgr *PlayerActivityMgr) (*Activity, error) {
-	if mgr == nil {
-		return nil, errors.New("mgr is nil")
-	}
-	if dbData == nil {
-		return nil, errors.New("db data is nil")
-	}
-	conf := GetActivity(dbData.GetActivityId())
-	if conf == nil {
-		return nil, errors.New("conf is nil")
-	}
-	timeTool := NewActivityTime(conf, mgr.getRegisterTime(), mgr.getArea())
-	activity := &Activity{
-		mgr:       mgr,
-		templates: make(map[int32][]iTemplate),
-		dbData:    dbData,
-		conf:      conf,
-		timeTool:  timeTool,
-	}
-	activity.init()
-	return activity, nil
-}
-
 //
 // Activity
 // @Description: 活动实例
@@ -79,7 +56,7 @@ type Activity struct {
 	// timeTool
 	// @Description: 活动时间处理器
 	//
-	timeTool IActivityTime
+	//timeTool IActivityTime
 
 	//
 	// dbData
@@ -92,6 +69,41 @@ type Activity struct {
 	// @Description: 配置数据
 	//
 	conf *pb.OperateActivity
+}
+
+func newActivity(dbData *pb.OperateActivityDB, mgr *PlayerActivityMgr) (*Activity, error) {
+	if mgr == nil {
+		return nil, errors.New("mgr is nil")
+	}
+	if dbData == nil {
+		return nil, errors.New("db data is nil")
+	}
+	conf := GetActivity(dbData.GetActivityId())
+	if conf == nil {
+		return nil, errors.New("conf is nil")
+	}
+
+	timeTool := NewActivityTime(conf, mgr.getRegisterTime(), mgr.getArea())
+
+	// 拷贝global配置数据,转换相对时间为时间戳
+	cConf := &pb.OperateActivity{}
+	if err := deepCopy(conf, cConf); err != nil {
+		return nil, err
+	}
+	cConf.PredictionTime = timeTool.getPredictionTime()
+	cConf.StartTime = timeTool.getStartTime()
+	cConf.EndTime = timeTool.getEndTime()
+	cConf.CloseDuration = timeTool.getCloseTime()
+
+	activity := &Activity{
+		mgr:       mgr,
+		templates: make(map[int32][]iTemplate),
+		dbData:    dbData,
+		conf:      conf,
+		//timeTool:  timeTool,
+	}
+	activity.init()
+	return activity, nil
 }
 
 func (m *Activity) init() {
@@ -213,7 +225,7 @@ func (m *Activity) invalid() error {
 // @return int32
 //
 func (m *Activity) openDay() int32 {
-	return int32(diffDayNum(nowTimestamp(), m.timeTool.getStartTime()))
+	return int32(diffDayNum(nowTimestamp(), m.getConf().GetStartTime()))
 }
 
 //
@@ -223,7 +235,7 @@ func (m *Activity) openDay() int32 {
 // @return bool true:过期
 //
 func (m *Activity) isExpire() bool {
-	return nowTimestamp() >= m.timeTool.getCloseTime()
+	return nowTimestamp() >= m.getConf().GetCloseDuration()
 }
 
 //
@@ -286,7 +298,7 @@ func (m *Activity) rangeTemplates(f func(template iTemplate)) {
 //
 func (m *Activity) isOpenTime() bool {
 	nowTime := nowTimestamp()
-	return m.timeTool.getStartTime() <= nowTime && nowTime <= m.timeTool.getEndTime()
+	return m.getConf().GetStartTime() <= nowTime && nowTime <= m.getConf().GetEndTime()
 }
 
 func (m *Activity) callUpdateStatusFun(updateInfo *pb.OperateActivityDB, status DataCmd) {
