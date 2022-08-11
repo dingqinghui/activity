@@ -123,7 +123,7 @@ func (m *operatorActivityMgr) addCache(pActivity *pb.OperateActivity) bool {
 		logError("添加失败已经存在运营活动实例", zap.Int64("activityId", pActivity.GetId()))
 		return false
 	}
-	m.callDataCmdFun(activity, DataAdd)
+	m.callDataCmdFun(pActivity, DataAdd)
 	m.activityMap.Store(pActivity.GetId(), pActivity)
 
 	logInfo("添加运营活动实例成功", zap.Int64("activityId", pActivity.GetId()), zap.Any("activity", pActivity))
