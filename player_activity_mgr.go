@@ -657,7 +657,7 @@ func (m *PlayerActivityMgr) PackAllOpenActivity() *pb.OperateGetListS2C {
 //
 func (m *PlayerActivityMgr) PackOneActivity(activityId int64) *pb.OperateNewS2C {
 	activity := m.getActivity(activityId)
-	if activity != nil {
+	if activity == nil {
 		return nil
 	}
 	s2c := &pb.OperateNewS2C{}
