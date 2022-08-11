@@ -203,9 +203,9 @@ func (m *PlayerActivityMgr) generateActivityCommonData(conf *pb.OperateActivity)
 		ActivityList: make(map[int32]*pb.ActivityDBList),
 		GotScores:    make(map[int32]bool),
 	}
-	if conf.GetPreCondition() != nil && conf.GetPreCondition().GetCondition() != 0 {
-		dbData.PreTaskInfo = &pb.OperateTaskInfo{}
-	}
+	//if conf.GetPreCondition() != nil && conf.GetPreCondition().GetCondition() != 0 {
+	//	dbData.PreTaskInfo = &pb.OperateTaskInfo{}
+	//}
 	return dbData
 }
 
