@@ -49,7 +49,7 @@ type IPlayer interface {
 // @return *PlayerActivityMgr
 //
 func NewPlayerActivityMgr(player IPlayer, areaId int32, channel int32, registerTime int64,
-	changeDataCallback PlayerDataCmdFun, initData map[int64]*pb.OperateActivityDB) *PlayerActivityMgr {
+	changeDataCallback PlayerDataCmdFun) *PlayerActivityMgr {
 	if player == nil {
 		panic("operate player is nil")
 	}
@@ -61,7 +61,7 @@ func NewPlayerActivityMgr(player IPlayer, areaId int32, channel int32, registerT
 		changStatusCallback: changeDataCallback,
 		activityMap:         make(map[int64]*Activity),
 	}
-	m.init(initData)
+
 	return m
 }
 
@@ -100,6 +100,10 @@ type PlayerActivityMgr struct {
 	// @Description: 状态变化回调函数
 	//
 	changStatusCallback PlayerDataCmdFun
+}
+
+func (m *PlayerActivityMgr) InitData(initData map[int64]*pb.OperateActivityDB) {
+	m.init(initData)
 }
 
 func (m *PlayerActivityMgr) getPlayer() IPlayer {

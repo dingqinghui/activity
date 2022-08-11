@@ -128,7 +128,9 @@ func (p *player) GetOperate() *PlayerActivityMgr {
 	if p.operate == nil {
 		// 创建玩家运营活动模块
 		p.operate = NewPlayerActivityMgr(p, 101, 10001, nowTimestamp(),
-			PlayerActivityDataUpdate, nil)
+			PlayerActivityDataUpdate)
+
+		p.operate.InitData(nil)
 	}
 	return p.operate
 }
