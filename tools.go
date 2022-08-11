@@ -9,7 +9,6 @@
 package activity
 
 import (
-	"encoding/json"
 	"github.com/golang/protobuf/proto"
 	"time"
 )
@@ -52,12 +51,12 @@ func isDifferDay(now, old int64) bool {
 	return diffDayNum(now, old) > 0
 }
 
-func deepCopy(src proto.Message, des interface{}) error {
+func deepCopy(src proto.Message, des proto.Message) error {
 	buf, err := proto.Marshal(src)
 	if err != nil {
 		return err
 	}
-	if err = json.Unmarshal(buf, des); err != nil {
+	if err = proto.Unmarshal(buf, des); err != nil {
 		return err
 	}
 	return nil
