@@ -151,8 +151,7 @@ func (m *signTemplate) isLoginTrigger() bool {
 }
 
 func (m *signTemplate) canSignDay() int32 {
-	day := m.activity.openDay()
-	return day + 1
+	return m.activity.openDay()
 }
 
 func (m *signTemplate) sign(player IPlayer) error {

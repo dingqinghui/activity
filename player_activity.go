@@ -225,7 +225,7 @@ func (m *Activity) invalid() error {
 // @return int32
 //
 func (m *Activity) openDay() int32 {
-	return int32(diffDayNum(nowTimestamp(), m.getConf().GetStartTime()))
+	return int32(diffDayNum(nowTimestamp(), m.getConf().GetStartTime())) + 1
 }
 
 //
