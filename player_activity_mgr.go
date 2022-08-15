@@ -268,7 +268,9 @@ func (m *PlayerActivityMgr) CheckNewAndDelete() {
 
 func (m *PlayerActivityMgr) checkDeleteActivity() {
 	m.rangeAll(func(activity *Activity) {
-		if !activity.isExpire() {
+		// 未撤回&&未过期
+		conf := GetActivity(activity.getId())
+		if conf != nil && !activity.isExpire() {
 			return
 		}
 		m.Delete(activity.getId())
@@ -328,6 +330,14 @@ func (m *PlayerActivityMgr) checkAddCondition(activity *pb.OperateActivity) bool
 // @return bool
 //
 func (m *PlayerActivityMgr) Delete(activityId int64) bool {
+	// 撤回直接删除活动
+	conf := GetActivity(activityId)
+	if conf == nil {
+		m.callActivityDataCmdFun(activityId, nil, DataDelete)
+		logInfo("配置不存在删除运营活动实例", zap.Int32("playerId", m.getPlayerId()), zap.Int64("activityId", activityId))
+		return true
+	}
+
 	activity, ok := m.activityMap[activityId]
 	if !ok {
 		return false
@@ -355,7 +365,8 @@ func (m *PlayerActivityMgr) addActivityList(list []*pb.OperateActivityDB) {
 		}
 		activity, err := newActivity(data, m)
 		if err != nil {
-			logError("activity is nil", zap.Error(err))
+			logError("activity conf is nil delete activity", zap.Error(err))
+			m.callActivityDataCmdFun(data.GetActivityId(), nil, DataDelete)
 			continue
 		}
 		m.activityMap[activity.getId()] = activity
