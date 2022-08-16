@@ -180,6 +180,14 @@ p.GetOperate().TriggerCondition(func(conf *pb.Condition, taskInfo *pb.OperateTas
    // 返回true 触发成功进行数据存档
    return true
 })
+
+
+// 任务重置
+p.GetOperate().ResetTaskByType(pb.TaskRefreshType_TRT_DAY)
+
+p.GetOperate().ResetTaskByType(pb.TaskRefreshType_TRT_WEEK)
+
+p.GetOperate().ResetTaskByType(pb.TaskRefreshType_TRT_MONTH)
 ```
 
 
