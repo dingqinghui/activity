@@ -203,9 +203,14 @@ func (m *PlayerActivityMgr) generateActivityCommonData(conf *pb.OperateActivity)
 		ActivityList: make(map[int32]*pb.ActivityDBList),
 		GotScores:    make(map[int32]bool),
 	}
-	if conf.GetPreCondition() != nil && conf.GetPreCondition().GetCondition() != 0 {
-		dbData.PreTaskInfo = &pb.OperateTaskInfo{}
+
+	for _, preCondition := range conf.GetPreCondition() {
+		if preCondition.GetCondition() == 0 {
+			continue
+		}
+		dbData.PreTaskInfos = append(dbData.PreTaskInfos, new(pb.OperateTaskInfo))
 	}
+
 	return dbData
 }
 
@@ -553,6 +558,38 @@ func (m *PlayerActivityMgr) Sign(activityId int64, index int) error {
 }
 
 //
+// SignGetReward
+// @Description: 领取签到奖励
+// @receiver m
+// @param activityId 活动Id
+// @param index 活动模板索引
+// @param day 领取哪天
+// @return error
+//
+func (m *PlayerActivityMgr) SignGetReward(activityId int64, index int, day int32) error {
+	activity := m.getStartActivity(activityId)
+	if activity == nil {
+		return activityNotExist
+	}
+	template := activity.getSignTemplate(index)
+	if template == nil {
+		return templateNotExist
+	}
+	//// 自动发送签到奖励
+	//if template.isAutoGetReward() {
+	//	return errors.New("sign reward is auto send")
+	//}
+	if err := template.getReward(m.getPlayer(), day); err != nil {
+		logError("领取签到奖励", zap.Int32("playerId", m.getPlayerId()), zap.Int64("activityId", activityId), zap.Int32("day", day), zap.Error(err))
+		return err
+	}
+	// 存档
+	template.saveDB()
+	logError("领取签到奖励", zap.Int32("playerId", m.getPlayerId()), zap.Int64("activityId", activityId), zap.Int32("day", day))
+	return nil
+}
+
+//
 // SignRepair
 // @Description: 补签
 // @receiver m
@@ -650,11 +687,8 @@ func (m *PlayerActivityMgr) GetScoreReward(activityId int64, index int) error {
 //
 func (m *PlayerActivityMgr) PackAllOpenActivity() *pb.OperateGetListS2C {
 	s2c := &pb.OperateGetListS2C{}
-	m.RangeAllOpen(func(activity *Activity) {
-		s2c.List = append(s2c.List, &pb.Operate{
-			Detailed: activity.getDbData(),
-			Conf:     activity.getConf(),
-		})
+	m.rangeAll(func(activity *Activity) {
+		s2c.List = append(s2c.List, activity.getClientData())
 	})
 	return s2c
 }
@@ -672,9 +706,36 @@ func (m *PlayerActivityMgr) PackOneActivity(activityId int64) *pb.OperateNewS2C 
 		return nil
 	}
 	s2c := &pb.OperateNewS2C{}
-	s2c.List = append(s2c.List, &pb.Operate{
-		Detailed: activity.getDbData(),
-		Conf:     activity.getConf(),
-	})
+	s2c.List = append(s2c.List, activity.getClientData())
 	return s2c
+}
+
+//
+// ResetTaskByType
+// @Description: 任务重置检测
+// @receiver m
+// @param resetType
+//
+func (m *PlayerActivityMgr) ResetTaskByType(resetType pb.TaskRefreshType) {
+	var rewardList []*pb.ItemData
+	f := func(conf *pb.Condition, taskInfo *pb.OperateTaskInfo) bool {
+		if conf.GetRefreshType() != resetType {
+			return false
+		}
+		// 添加未领取奖励
+		if taskInfo.GetTaskState() != pb.OperateTaskState_OTS_Finish {
+			rewardList = append(rewardList, conf.GetRewardList()...)
+		}
+		// 重置任务状态和进度
+		*taskInfo = pb.OperateTaskInfo{}
+		return true
+	}
+	// 遍历所有任务
+	m.rangeAll(func(activity *Activity) {
+		activity.rangeAllCondition(f)
+	})
+	// 邮件发送未领取奖励
+	if len(rewardList) > 0 {
+		_ = m.getPlayer().OperateSendMail(rewardList)
+	}
 }

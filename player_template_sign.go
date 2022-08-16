@@ -52,6 +52,7 @@ func (m *signTemplate) initData() {
 			taskList = append(taskList, &pb.OperateTaskInfo{})
 		}
 		data.Conditions = append(data.Conditions, &pb.RepairCondition{Tasks: taskList})
+		data.Gots = make(map[int32]bool)
 	}
 	m.dbData = &pb.ActivityTemplateDB{SignInDB: data}
 }
@@ -150,31 +151,106 @@ func (m *signTemplate) isLoginTrigger() bool {
 	return !conf.GetTriggerCondition()
 }
 
+////
+//// isAutoGetReward
+//// @Description: 是否自动发送签到奖励
+//// @receiver m
+//// @return bool
+////
+//func (m *signTemplate) isAutoGetReward() bool {
+//	conf := m.getSignConf()
+//	if conf == nil {
+//		return false
+//	}
+//	return !conf.GetIsAutoGetReward()
+//}
+
 func (m *signTemplate) canSignDay() int32 {
 	return m.activity.openDay()
 }
 
 func (m *signTemplate) sign(player IPlayer) error {
+	dbData := m.getSignData()
+	if dbData == nil {
+		return errors.New("sign db data is nil")
+	}
 	// 检测签到条件
 	if err := m.checkSignCondition(player); err != nil {
 		return err
 	}
 
-	// 下发奖励
-	if err := m.addSignReward(player); err != nil {
-		return err
-	}
-
+	//// 自动下发奖励
+	//if m.getSignConf().GetIsAutoGetReward() {
+	//	if err := m.addSignReward(player); err != nil {
+	//		return err
+	//	}
+	//}
 	// 签到
-	dbData := m.getSignData()
-	if dbData == nil {
-		return errors.New("sign db data is nil")
-	}
 	dbData.SignedDay += 1
 	dbData.LastSignTimestamp = nowTimestamp()
 	m.saveDB()
 	logInfo("签到成功", zap.Int32("playerId", player.GetId()), zap.Int64("activityId", m.activity.getId()), zap.Int32("signedDay", dbData.GetSignedDay()))
 	return nil
+}
+
+//
+// isGotReward
+// @Description: 是否已领取奖励
+// @receiver m
+// @param day
+// @return bool
+//
+func (m *signTemplate) isGotReward(day int32) bool {
+	dbData := m.getSignData()
+	_, ok := dbData.GetGots()[day]
+	return ok
+}
+
+//
+// getReward
+// @Description: 领取签到奖励
+// @receiver m
+// @param player
+// @param day
+// @return error
+//
+func (m *signTemplate) getReward(player IPlayer, day int32) error {
+
+	dbData := m.getSignData()
+	if dbData == nil {
+		return errors.New("sign db data is nil")
+	}
+
+	// 没有签到
+	if day > dbData.GetSignedDay() {
+		return errors.New("not signed")
+	}
+
+	// 检测是否已领取奖励
+	if m.isGotReward(day) {
+		return errors.New("sign reward got")
+	}
+
+	// 标记已领取
+	m.getSignData().GetGots()[day] = true
+
+	// 下发奖励
+	reward := m.getSignRewardConfByDay(day)
+	if err := player.OperateAddReward(reward.GetSignInReward()); err != nil {
+		return errors.New("sign add reward fail ")
+	}
+	return nil
+}
+
+func (m *signTemplate) getSignRewardConfByDay(day int32) *pb.SignInReward {
+	conf := m.getSignConf()
+	if conf == nil {
+		return nil
+	}
+	if int(day) > len(conf.GetRewardList()) {
+		return nil
+	}
+	return conf.GetRewardList()[day-1]
 }
 
 func (m *signTemplate) checkSignCondition(player IPlayer) error {
@@ -339,4 +415,24 @@ func (m *signTemplate) repairCondition(player IPlayer) error {
 		}
 	}
 	return nil
+}
+
+//
+// getCanReceiveReward
+// @Description: 获取所有可领取奖励
+// @receiver m
+// @return []*pb.ItemData
+//
+func (m *signTemplate) getCanReceiveReward() []*pb.ItemData {
+	max := m.getSignData().GetSignedDay()
+	var rewards []*pb.ItemData
+	for day := int32(0); day <= max; day++ {
+		// 已领取
+		if m.isGotReward(day) {
+			continue
+		}
+		reward := m.getSignRewardConfByDay(day)
+		rewards = append(rewards, reward.GetSignInReward()...)
+	}
+	return rewards
 }

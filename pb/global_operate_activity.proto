@@ -21,6 +21,18 @@ enum ActivityTemplateType {
     SCORE_TYPE = 5;              // 积分
 }
 
+// 任务刷新类型
+enum TaskRefreshType {
+    TRT_NOT = 0;  // 不刷新
+    TRT_DAY = 1;  // 每日
+    TRT_WEEK = 2; // 每周
+    TRT_MONTH = 3;// 每月
+}
+
+
+
+
+
 // 道具（货币）通过结构
 message ItemData {
     int32 Id = 1;   //道具（货币）ID
@@ -56,10 +68,12 @@ message OperateActivity {
 
     bool                            IsNestedActivity = 14;      // 是否开启时间嵌套活动
     map<int32, ActivityList>        ActivityList = 15;          // 活动模板ID组  key:活动开启天数  value:活动模板列表
-
-    Condition                       PreCondition = 16;          // 活动前置条件
-
+    repeated Condition              PreCondition = 16;          // 活动前置条件
     repeated ScoreTemplate          ScoreSystem = 17;           // 积分系统
+    int32                           Label = 18;                 //页签
+    string                          ClientUI = 19;              //客户端UI
+    int32                           Sort = 20;                  //排序值
+    bool                            NeedPreCondAllFinished = 21;// 前置条件是否需要全部完成 true:全部完成 false：完成一个
 }
 
 // 活动列表
@@ -88,6 +102,7 @@ message Condition {
     repeated    int32               ParamsList = 2;         // 条件参数
     string                          Description = 3;        // 条件说明
     repeated ItemData               RewardList = 4;         // 奖励列表
+    TaskRefreshType                 RefreshType = 5;        // 刷新类型
 }
 
 
@@ -111,6 +126,7 @@ message SignInTemplate {
     int32 RepairSignInCount = 3;                    // 补签次数
     repeated RepairSignInRule RepairSignIn = 4;     // 补签规则(长度等于补签次数)
     repeated SignInReward RewardList = 5;           // 签到奖励(长度等于天数)
+    bool IsAutoGetReward = 6;                       // 是否自动发放签到奖励 true：自动  false：手动领取
 }
 
 
@@ -187,14 +203,10 @@ enum OperateTaskState
     OTS_Over = 2; //任务完成，已经领奖
 }
 
-
-
-
-
 message OperateActivityDB
 {
     int64                                 ActivityId    = 1;               // 活动ID
-    OperateTaskInfo                       PreTaskInfo   = 2;               // 前置任务进度信息
+    repeated  OperateTaskInfo             PreTaskInfos   = 2;              // 前置任务进度信息
     map<int32,bool>                       GotScores     = 3;               // 已领取积分信息  key:OperateActivity.ScoreTemplate 数组索引  value:是否开启
     map<int32, ActivityDBList>            ActivityList  = 4;               // 活动模板ID组  key:活动天数  value：活动模板列表
 }
@@ -221,6 +233,7 @@ message SignInTemplateDB {
     int64 LastSignTimestamp = 2;                    // 上次签到时间戳
     repeated RepairCondition conditions = 3;        // 补签任务进度
     int32 RepairCount = 4 ;                         // 补签次数
+    map<int32,bool> Gots = 5;                       // 已领取奖励
 }
 
 message RepairCondition {
@@ -234,9 +247,9 @@ message ConditionTemplateDB
 }
 
 
-
 message Operate
 {
      OperateActivityDB  detailed     = 1;  //活动详细信息
      OperateActivity    conf         = 2;  //活动配置信息
+     int32              day          = 3;  //开启天数
 }

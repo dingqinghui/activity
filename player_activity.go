@@ -194,11 +194,24 @@ func (m *Activity) addTemplate(day int32, index int32, tplConf *pb.ActivityTempl
 // @return bool true:完成
 //
 func (m *Activity) finishedPreCondition() bool {
-	if m.getDbData().GetPreTaskInfo() == nil {
-		return true
+	defaultRet := true
+	preConditionAllFinished := m.getConf().GetNeedPreCondAllFinished()
+	for _, taskInfo := range m.getDbData().GetPreTaskInfos() {
+		if preConditionAllFinished {
+			// 全部完成
+			if taskInfo.GetTaskState() == pb.OperateTaskState_OTS_Doing {
+				return false
+			}
+			defaultRet = true
+		} else {
+			// 只完成一个
+			if taskInfo.GetTaskState() != pb.OperateTaskState_OTS_Doing {
+				return true
+			}
+			defaultRet = false
+		}
 	}
-	info := m.getDbData().GetPreTaskInfo()
-	return info.GetTaskState() != pb.OperateTaskState_OTS_Doing
+	return defaultRet
 }
 
 //
@@ -314,12 +327,16 @@ func (m *Activity) callUpdateStatusFun(updateInfo *pb.OperateActivityDB, status 
 func (m *Activity) rangeAllCondition(f RangeTaskFunType) {
 	conf := m.getConf()
 	// 无论是否开启都前置条件都可触发
-	preConditionConf := conf.GetPreCondition()
-	if preConditionConf != nil {
-		if f(preConditionConf, m.getDbData().GetPreTaskInfo()) {
+	for i, taskInfo := range m.getDbData().GetPreTaskInfos() {
+		if i >= len(conf.GetPreCondition()) {
+			break
+		}
+		preTaskConf := conf.GetPreCondition()[i]
+		if f(preTaskConf, taskInfo) {
 			m.commonSaveDB()
 		}
 	}
+
 	// 只触发开启的活动
 	if err := m.invalid(); err != nil {
 		logInfo("活动不可用", zap.Error(err), zap.Int32("playerId", m.mgr.getPlayerId()), zap.Int64("activityId", m.getId()))
@@ -375,9 +392,9 @@ func (m *Activity) commonSaveDB() {
 
 func (m *Activity) generateScoreUpdateDBData() *pb.OperateActivityDB {
 	updateInfo := &pb.OperateActivityDB{
-		ActivityId:  m.getId(),
-		GotScores:   m.dbData.GetGotScores(),
-		PreTaskInfo: m.dbData.GetPreTaskInfo(),
+		ActivityId:   m.getId(),
+		GotScores:    m.dbData.GetGotScores(),
+		PreTaskInfos: m.dbData.GetPreTaskInfos(),
 	}
 	return updateInfo
 }
@@ -507,4 +524,12 @@ func (m *Activity) setGotScoreRewardRecord(index int) {
 		return
 	}
 	gotScores[int32(index)] = true
+}
+
+func (m *Activity) getClientData() *pb.Operate {
+	return &pb.Operate{
+		Detailed: m.getDbData(),
+		Conf:     m.getConf(),
+		Day:      m.openDay(),
+	}
 }

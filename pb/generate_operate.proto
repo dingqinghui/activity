@@ -85,6 +85,23 @@ message OperateRepairSignS2C
      int32 tplIndex = 2;       // 模板索引
 }
 
+//签到领奖
+message OperateSignGetRewardC2S
+{
+     int64 activityId  = 1;    // 活动Id
+     int32 tplIndex = 2;       // 模板索引
+     int32 day =3;             // 领取那个奖励
+}
+
+//签到领奖
+message OperateSignGetRewardS2C
+{
+     int64 activityId  = 1;    // 活动Id
+     int32 tplIndex = 2;       // 模板索引
+     int32 day =3;             // 领取那个奖励
+}
+
+
 
 //购买商品
 message OperateShopBuyC2S
