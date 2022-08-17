@@ -768,6 +768,8 @@ func (m *PlayerActivityMgr) OnNewDay() {
 	m.resetTaskByType(pb.TaskRefreshType_TRT_DAY)
 	// 重置签到每日补签次数
 	m.resetEveryDaySignRepairCount()
+	// 触发一次自动签到
+	_ = m.Login()
 }
 
 //

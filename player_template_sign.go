@@ -28,6 +28,10 @@ func newSignTemplate(day int32, index int32, conf *pb.ActivityTemplate, activity
 		baseTemplate: newBaseTemplate(day, index, conf, activity, dbData),
 	}
 	result.init(result)
+
+	if result.getDbData().GetSignInDB().GetGots() == nil {
+		result.getDbData().GetSignInDB().Gots = make(map[int32]bool)
+	}
 	return result
 }
 
