@@ -194,6 +194,9 @@ func (m *Activity) addTemplate(day int32, index int32, tplConf *pb.ActivityTempl
 // @return bool true:完成
 //
 func (m *Activity) finishedPreCondition() bool {
+	if m.getDbData().GetPreTaskGroup() == nil {
+		return true
+	}
 	for _, group := range m.getDbData().GetPreTaskGroup() {
 		// 有一个组完成，则任务就可以生效
 		if m.finishedPreConditionGroup(group) {
