@@ -210,10 +210,18 @@ enum OperateTaskState
 message OperateActivityDB
 {
     int64                                 ActivityId    = 1;               // 活动ID
-    repeated  OperateTaskInfo             PreTaskInfos   = 2;              // 前置任务进度信息
+    repeated  TaskGroup                   PreTaskGroup  = 2;              // 前置任务进度信息
     map<int32,bool>                       GotScores     = 3;               // 已领取积分信息  key:OperateActivity.ScoreTemplate 数组索引  value:是否开启
     map<int32, ActivityDBList>            ActivityList  = 4;               // 活动模板ID组  key:活动天数  value：活动模板列表
 }
+
+
+message TaskGroup
+{
+    repeated  OperateTaskInfo             PreTaskInfos   = 1;              // 前置任务进度信息
+}
+
+
 
 // 活动列表
 message ActivityDBList {
