@@ -65,15 +65,19 @@ message OperateActivity {
     string                          ActivityDescription = 11;   // 活动描述
     ActivityImage                   BackgroundImgUrl = 12;      // 活动背景图地址
     ActivityImage                   TitleImgUrl = 13;           // 活动标题图地址
-
     bool                            IsNestedActivity = 14;      // 是否开启时间嵌套活动
     map<int32, ActivityList>        ActivityList = 15;          // 活动模板ID组  key:活动开启天数  value:活动模板列表
-    repeated Condition              PreCondition = 16;          // 活动前置条件
+    repeated ConditionGroup         PreConditionGroup = 16;     // 活动前置条件组
     repeated ScoreTemplate          ScoreSystem = 17;           // 积分系统
     int32                           Label = 18;                 //页签
     string                          ClientUI = 19;              //客户端UI
     int32                           Sort = 20;                  //排序值
     bool                            NeedPreCondAllFinished = 21;// 前置条件是否需要全部完成 true:全部完成 false：完成一个
+}
+
+
+message ConditionGroup {
+    repeated Condition              PreCondition = 16;          // 活动前置条件
 }
 
 // 活动列表

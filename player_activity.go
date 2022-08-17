@@ -194,24 +194,29 @@ func (m *Activity) addTemplate(day int32, index int32, tplConf *pb.ActivityTempl
 // @return bool true:完成
 //
 func (m *Activity) finishedPreCondition() bool {
-	defaultRet := true
-	preConditionAllFinished := m.getConf().GetNeedPreCondAllFinished()
-	for _, taskInfo := range m.getDbData().GetPreTaskInfos() {
-		if preConditionAllFinished {
-			// 全部完成
-			if taskInfo.GetTaskState() == pb.OperateTaskState_OTS_Doing {
-				return false
-			}
-			defaultRet = true
-		} else {
-			// 只完成一个
-			if taskInfo.GetTaskState() != pb.OperateTaskState_OTS_Doing {
-				return true
-			}
-			defaultRet = false
+	for _, group := range m.getDbData().GetPreTaskGroup() {
+		// 有一个组完成，则任务就可以生效
+		if m.finishedPreConditionGroup(group) {
+			return true
 		}
 	}
-	return defaultRet
+	return false
+}
+
+//
+// finishedPreConditionGroup
+// @Description: 组内任务是否全部完成
+// @receiver m
+// @param group
+// @return bool
+//
+func (m *Activity) finishedPreConditionGroup(group *pb.TaskGroup) bool {
+	for _, taskInfo := range group.GetPreTaskInfos() {
+		if taskInfo.GetTaskState() == pb.OperateTaskState_OTS_Doing {
+			return false
+		}
+	}
+	return true
 }
 
 //
@@ -318,6 +323,24 @@ func (m *Activity) callUpdateStatusFun(updateInfo *pb.OperateActivityDB, status 
 	m.mgr.callActivityDataCmdFun(m.getId(), updateInfo, status)
 }
 
+func (m *Activity) rangeAllPreTask(f RangeTaskFunType) {
+	for i, group := range m.getDbData().GetPreTaskGroup() {
+		for j, taskInfo := range group.GetPreTaskInfos() {
+			if i >= len(m.getConf().GetPreConditionGroup()) {
+				break
+			}
+			groupConf := m.getConf().GetPreConditionGroup()[i]
+			if j >= len(groupConf.GetPreCondition()) {
+				break
+			}
+			taskConf := groupConf.GetPreCondition()[j]
+			if f(taskConf, taskInfo) {
+				m.commonSaveDB()
+			}
+		}
+	}
+}
+
 //
 // rangeAllCondition
 // @Description: 遍历活动所有任务
@@ -325,17 +348,8 @@ func (m *Activity) callUpdateStatusFun(updateInfo *pb.OperateActivityDB, status 
 // @param f
 //
 func (m *Activity) rangeAllCondition(f RangeTaskFunType) {
-	conf := m.getConf()
-	// 无论是否开启都前置条件都可触发
-	for i, taskInfo := range m.getDbData().GetPreTaskInfos() {
-		if i >= len(conf.GetPreCondition()) {
-			break
-		}
-		preTaskConf := conf.GetPreCondition()[i]
-		if f(preTaskConf, taskInfo) {
-			m.commonSaveDB()
-		}
-	}
+	// 触发前置任务
+	m.rangeAllPreTask(f)
 
 	// 只触发开启的活动
 	if err := m.invalid(); err != nil {
@@ -394,7 +408,7 @@ func (m *Activity) generateScoreUpdateDBData() *pb.OperateActivityDB {
 	updateInfo := &pb.OperateActivityDB{
 		ActivityId:   m.getId(),
 		GotScores:    m.dbData.GetGotScores(),
-		PreTaskInfos: m.dbData.GetPreTaskInfos(),
+		PreTaskGroup: m.dbData.GetPreTaskGroup(),
 	}
 	return updateInfo
 }

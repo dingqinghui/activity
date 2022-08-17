@@ -203,14 +203,14 @@ func (m *PlayerActivityMgr) generateActivityCommonData(conf *pb.OperateActivity)
 		ActivityList: make(map[int32]*pb.ActivityDBList),
 		GotScores:    make(map[int32]bool),
 	}
-
-	for _, preCondition := range conf.GetPreCondition() {
-		if preCondition.GetCondition() == 0 {
-			continue
+	
+	for _, group := range conf.GetPreConditionGroup() {
+		groupData := new(pb.TaskGroup)
+		dbData.PreTaskGroup = append(dbData.PreTaskGroup, groupData)
+		for range group.GetPreCondition() {
+			groupData.PreTaskInfos = append(groupData.PreTaskInfos, new(pb.OperateTaskInfo))
 		}
-		dbData.PreTaskInfos = append(dbData.PreTaskInfos, new(pb.OperateTaskInfo))
 	}
-
 	return dbData
 }
 
@@ -339,6 +339,7 @@ func (m *PlayerActivityMgr) Delete(activityId int64) bool {
 	conf := GetActivity(activityId)
 	if conf == nil {
 		m.callActivityDataCmdFun(activityId, nil, DataDelete)
+		delete(m.activityMap, activityId)
 		logInfo("配置不存在删除运营活动实例", zap.Int32("playerId", m.getPlayerId()), zap.Int64("activityId", activityId))
 		return true
 	}
@@ -347,11 +348,8 @@ func (m *PlayerActivityMgr) Delete(activityId int64) bool {
 	if !ok {
 		return false
 	}
-
 	_ = m.getPlayer().OperateSendMail(activity.getCanReceiveReward(m.getPlayer()))
-
 	m.callActivityDataCmdFun(activityId, nil, DataDelete)
-
 	delete(m.activityMap, activityId)
 	logInfo("删除运营活动实例", zap.Int32("playerId", m.getPlayerId()), zap.Int64("activityId", activityId), zap.Any("Activity", activity))
 	return true
