@@ -292,6 +292,7 @@ func (m *signTemplate) repair(player IPlayer) error {
 	}
 	dbData.SignedDay += 1
 	dbData.RepairCount += 1
+	dbData.EveryDayRepairCount += 1
 	m.saveDB()
 
 	logInfo("补签成功", zap.Int32("playerId", player.GetId()), zap.Int64("activityId", m.activity.getId()),
@@ -361,6 +362,14 @@ func (m *signTemplate) addSignReward(player IPlayer) error {
 	return nil
 }
 
+func (m *signTemplate) resetEveryDayRepairCount() {
+	if m.getSignData() == nil {
+		return
+	}
+	m.getSignData().EveryDayRepairCount = 0
+	m.saveDB()
+}
+
 func (m *signTemplate) repairCondition(player IPlayer) error {
 	conf := m.getSignConf()
 	if conf == nil {
@@ -374,6 +383,11 @@ func (m *signTemplate) repairCondition(player IPlayer) error {
 	// 已补签次数 > 可补签次数
 	if dbData.GetRepairCount() >= m.getCantRepairCount() {
 		return errors.New("repair sign count limit")
+	}
+
+	// 每日已补签次数 >= 每日可补签次数
+	if dbData.GetEveryDayRepairCount() >= m.getSignConf().GetEveryDayRepairSignInCount() {
+		return errors.New("every day repair sign count limit")
 	}
 
 	// 已签到天数

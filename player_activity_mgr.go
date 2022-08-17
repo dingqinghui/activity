@@ -709,12 +709,12 @@ func (m *PlayerActivityMgr) PackOneActivity(activityId int64) *pb.OperateNewS2C 
 }
 
 //
-// ResetTaskByType
+// resetTaskByType
 // @Description: 任务重置检测
 // @receiver m
 // @param resetType
 //
-func (m *PlayerActivityMgr) ResetTaskByType(resetType pb.TaskRefreshType) {
+func (m *PlayerActivityMgr) resetTaskByType(resetType pb.TaskRefreshType) {
 	var rewardList []*pb.ItemData
 	f := func(conf *pb.Condition, taskInfo *pb.OperateTaskInfo) bool {
 		if conf.GetRefreshType() != resetType {
@@ -736,4 +736,56 @@ func (m *PlayerActivityMgr) ResetTaskByType(resetType pb.TaskRefreshType) {
 	if len(rewardList) > 0 {
 		_ = m.getPlayer().OperateSendMail(rewardList)
 	}
+}
+
+//
+// resetEveryDaySignRepairCount
+// @Description: 重置补签次数
+// @receiver m
+//
+func (m *PlayerActivityMgr) resetEveryDaySignRepairCount() {
+	m.RangeAllOpen(func(act *Activity) {
+		act.rangeTemplates(func(template iTemplate) {
+			if template.getType() != pb.ActivityTemplateType_SIGN_IN_TYPE {
+				return
+			}
+			sign, ok := template.(*signTemplate)
+			if !ok {
+				return
+			}
+			sign.resetEveryDayRepairCount()
+		})
+	})
+}
+
+//
+// OnNewDay
+// @Description: 跨天
+// @receiver m
+//
+func (m *PlayerActivityMgr) OnNewDay() {
+	// 重置任务状态
+	m.resetTaskByType(pb.TaskRefreshType_TRT_DAY)
+	// 重置签到每日补签次数
+	m.resetEveryDaySignRepairCount()
+}
+
+//
+// OnNewWeek
+// @Description: 跨周
+// @receiver m
+//
+func (m *PlayerActivityMgr) OnNewWeek() {
+	// 重置任务状态
+	m.resetTaskByType(pb.TaskRefreshType_TRT_WEEK)
+}
+
+//
+// OnNewMonth
+// @Description: 跨月
+// @receiver m
+//
+func (m *PlayerActivityMgr) OnNewMonth() {
+	// 重置任务状态
+	m.resetTaskByType(pb.TaskRefreshType_TRT_MONTH)
 }

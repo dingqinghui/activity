@@ -131,6 +131,7 @@ message SignInTemplate {
     repeated RepairSignInRule RepairSignIn = 4;     // 补签规则(长度等于补签次数)
     repeated SignInReward RewardList = 5;           // 签到奖励(长度等于天数)
     bool IsAutoGetReward = 6;                       // 是否自动发放签到奖励 true：自动  false：手动领取
+    int32 EveryDayRepairSignInCount = 7;            // 每日补签次数上限
 }
 
 
@@ -246,6 +247,7 @@ message SignInTemplateDB {
     repeated RepairCondition conditions = 3;        // 补签任务进度
     int32 RepairCount = 4 ;                         // 补签次数
     map<int32,bool> Gots = 5;                       // 已领取奖励
+    int32 EveryDayRepairCount = 6;                  // 每日已补签次数
 }
 
 message RepairCondition {
