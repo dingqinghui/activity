@@ -52,8 +52,8 @@ func (m *signTemplate) initData() {
 			taskList = append(taskList, &pb.OperateTaskInfo{})
 		}
 		data.Conditions = append(data.Conditions, &pb.RepairCondition{Tasks: taskList})
-		data.Gots = make(map[int32]bool)
 	}
+	data.Gots = make(map[int32]bool)
 	m.dbData = &pb.ActivityTemplateDB{SignInDB: data}
 }
 
