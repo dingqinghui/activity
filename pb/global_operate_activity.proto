@@ -77,7 +77,7 @@ message OperateActivity {
 
 
 message ConditionGroup {
-    repeated Condition              PreCondition = 16;          // 活动前置条件
+    repeated Condition              PreCondition = 1;          // 活动前置条件
 }
 
 // 活动列表
