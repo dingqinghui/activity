@@ -388,12 +388,12 @@ func (m *Activity) getScoreReward(player IPlayer, index int) error {
 	}
 
 	// 检测积分
-	if err := player.OperateCheckCost([]*pb.ItemData{scoreInfo.GetScore()}); err != nil {
+	if err := player.OperateCheckCost(m.getId(), []*pb.ItemData{scoreInfo.GetScore()}); err != nil {
 		return err
 	}
 
 	// 添加奖励
-	if err := player.OperateAddReward(scoreInfo.GetReward()); err != nil {
+	if err := player.OperateAddReward(m.getId(), scoreInfo.GetReward()); err != nil {
 		return err
 	}
 
@@ -500,7 +500,7 @@ func (m *Activity) getCanReceiveScoreReward(player IPlayer) []*pb.ItemData {
 			continue
 		}
 		// 检测积分
-		if err := player.OperateCheckCost([]*pb.ItemData{scoreInfo.GetScore()}); err != nil {
+		if err := player.OperateCheckCost(m.getId(), []*pb.ItemData{scoreInfo.GetScore()}); err != nil {
 			continue
 		}
 		items = append(items, scoreInfo.GetReward()...)

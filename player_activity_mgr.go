@@ -31,10 +31,10 @@ type PlayerDataCmdFun func(playerId int32, activityId int64, cmd DataCmd, update
 //
 type IPlayer interface {
 	GetId() int32
-	OperateCheckCost(cost []*pb.ItemData) error
-	OperateAddReward(items []*pb.ItemData) error
-	OperateSubCost(cost []*pb.ItemData) error
-	OperateSendMail(items []*pb.ItemData) error
+	OperateCheckCost(activityId int64, cost []*pb.ItemData) error
+	OperateAddReward(activityId int64, items []*pb.ItemData) error
+	OperateSubCost(activityId int64, cost []*pb.ItemData) error
+	OperateSendMail(activityId int64, items []*pb.ItemData) error
 }
 
 //
@@ -157,7 +157,7 @@ func (m *PlayerActivityMgr) dbBatchDelete(deleteList []*pb.OperateActivityDB) er
 			continue
 		}
 
-		_ = m.getPlayer().OperateSendMail(activity.getCanReceiveReward(m.getPlayer()))
+		_ = m.getPlayer().OperateSendMail(activity.getId(), activity.getCanReceiveReward(m.getPlayer()))
 
 		m.callActivityDataCmdFun(data.GetActivityId(), nil, DataDelete)
 	}
@@ -203,7 +203,7 @@ func (m *PlayerActivityMgr) generateActivityCommonData(conf *pb.OperateActivity)
 		ActivityList: make(map[int32]*pb.ActivityDBList),
 		GotScores:    make(map[int32]bool),
 	}
-	
+
 	for _, group := range conf.GetPreConditionGroup() {
 		groupData := new(pb.TaskGroup)
 		dbData.PreTaskGroup = append(dbData.PreTaskGroup, groupData)
@@ -348,7 +348,7 @@ func (m *PlayerActivityMgr) Delete(activityId int64) bool {
 	if !ok {
 		return false
 	}
-	_ = m.getPlayer().OperateSendMail(activity.getCanReceiveReward(m.getPlayer()))
+	_ = m.getPlayer().OperateSendMail(activityId, activity.getCanReceiveReward(m.getPlayer()))
 	m.callActivityDataCmdFun(activityId, nil, DataDelete)
 	delete(m.activityMap, activityId)
 	logInfo("删除运营活动实例", zap.Int32("playerId", m.getPlayerId()), zap.Int64("activityId", activityId), zap.Any("Activity", activity))
@@ -715,27 +715,30 @@ func (m *PlayerActivityMgr) PackOneActivity(activityId int64) *pb.OperateNewS2C 
 // @param resetType
 //
 func (m *PlayerActivityMgr) resetTaskByType(resetType pb.TaskRefreshType) {
-	var rewardList []*pb.ItemData
-	f := func(conf *pb.Condition, taskInfo *pb.OperateTaskInfo) bool {
-		if conf.GetRefreshType() != resetType {
-			return false
-		}
-		// 添加未领取奖励
-		if taskInfo.GetTaskState() != pb.OperateTaskState_OTS_Finish {
-			rewardList = append(rewardList, conf.GetRewardList()...)
-		}
-		// 重置任务状态和进度
-		*taskInfo = pb.OperateTaskInfo{}
-		return true
-	}
 	// 遍历所有任务
 	m.rangeAll(func(activity *Activity) {
+		var rewardList []*pb.ItemData
+		f := func(conf *pb.Condition, taskInfo *pb.OperateTaskInfo) bool {
+			if conf.GetRefreshType() != resetType {
+				return false
+			}
+			// 添加未领取奖励
+			if taskInfo.GetTaskState() != pb.OperateTaskState_OTS_Finish {
+				rewardList = append(rewardList, conf.GetRewardList()...)
+			}
+
+			// 重置任务状态和进度
+			*taskInfo = pb.OperateTaskInfo{}
+
+			return true
+		}
 		activity.rangeAllCondition(f)
+
+		// 邮件发送未领取奖励
+		if len(rewardList) > 0 {
+			_ = m.getPlayer().OperateSendMail(activity.getId(), rewardList)
+		}
 	})
-	// 邮件发送未领取奖励
-	if len(rewardList) > 0 {
-		_ = m.getPlayer().OperateSendMail(rewardList)
-	}
 }
 
 //

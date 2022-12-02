@@ -97,7 +97,7 @@ func (m *taskTemplate) finishTask(player IPlayer, taskId int32) error {
 		return errors.New("task status err")
 	}
 
-	if err := player.OperateAddReward(condition.GetRewardList()); err != nil {
+	if err := player.OperateAddReward(m.activity.getId(), condition.GetRewardList()); err != nil {
 		return err
 	}
 

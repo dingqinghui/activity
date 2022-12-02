@@ -240,7 +240,7 @@ func (m *signTemplate) getReward(player IPlayer, day int32) error {
 
 	// 下发奖励
 	reward := m.getSignRewardConfByDay(day)
-	if err := player.OperateAddReward(reward.GetSignInReward()); err != nil {
+	if err := player.OperateAddReward(m.activity.getId(), reward.GetSignInReward()); err != nil {
 		return errors.New("sign add reward fail ")
 	}
 	return nil
@@ -353,7 +353,7 @@ func (m *signTemplate) addSignReward(player IPlayer) error {
 	rewards := conf.GetRewardList()
 	if int(dbData.GetSignedDay()) < len(rewards) {
 		reward := rewards[dbData.GetSignedDay()]
-		if err := player.OperateAddReward(reward.GetSignInReward()); err != nil {
+		if err := player.OperateAddReward(m.activity.getId(), reward.GetSignInReward()); err != nil {
 			logError("签到失败",
 				zap.Int32("playerId", player.GetId()),
 				zap.Int64("activityId", m.activity.getId()),
@@ -406,7 +406,7 @@ func (m *signTemplate) repairCondition(player IPlayer) error {
 	rule := rules[signedDay]
 	// 道具消耗补签
 	if rule.GetRSI_Expend() != nil {
-		if err := player.OperateSubCost(rule.GetRSI_Expend()); err != nil {
+		if err := player.OperateSubCost(m.activity.getId(), rule.GetRSI_Expend()); err != nil {
 			logError("补签失败，道具不足", zap.Int32("playerId", player.GetId()), zap.Int32("signedDay", signedDay))
 			return errors.New("repair condition not enough expend")
 		}

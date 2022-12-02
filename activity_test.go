@@ -77,12 +77,12 @@ func TestPlayer(t *testing.T) {
 		return true
 	})
 
-	// 任务重置
-	p.GetOperate().ResetTaskByType(pb.TaskRefreshType_TRT_DAY)
-
-	p.GetOperate().ResetTaskByType(pb.TaskRefreshType_TRT_WEEK)
-
-	p.GetOperate().ResetTaskByType(pb.TaskRefreshType_TRT_MONTH)
+	//// 任务重置
+	//p.GetOperate().ResetTaskByType(pb.TaskRefreshType_TRT_DAY)
+	//
+	//p.GetOperate().ResetTaskByType(pb.TaskRefreshType_TRT_WEEK)
+	//
+	//p.GetOperate().ResetTaskByType(pb.TaskRefreshType_TRT_MONTH)
 }
 
 func newPlayer() *player {
@@ -98,20 +98,20 @@ type player struct {
 func (p *player) GetId() int32 {
 	return 1
 }
-func (p *player) OperateCheckCost(items []*pb.ItemData) error {
+func (p *player) OperateCheckCost(activityId int64, items []*pb.ItemData) error {
 	// 自定义道具检测
 	return nil
 }
-func (p *player) OperateAddReward(items []*pb.ItemData) error {
+func (p *player) OperateAddReward(activityId int64, items []*pb.ItemData) error {
 	// 自定义添加奖励
 	return nil
 }
-func (p *player) OperateSubCost(items []*pb.ItemData) error {
+func (p *player) OperateSubCost(activityId int64, items []*pb.ItemData) error {
 	// 自定义扣除消耗
 	return nil
 }
 
-func (p *player) OperateSendMail(items []*pb.ItemData) error {
+func (p *player) OperateSendMail(activityId int64, items []*pb.ItemData) error {
 	return nil
 }
 

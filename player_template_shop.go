@@ -84,15 +84,15 @@ func (m *shopTemplate) buy(player IPlayer, goodsIndex int) error {
 	//}
 
 	// 检测消耗
-	if err := player.OperateCheckCost(goodsConf.GetExpend()); err != nil {
+	if err := player.OperateCheckCost(m.activity.getId(), goodsConf.GetExpend()); err != nil {
 		return err
 	}
 	// 扣除消耗
-	if err := player.OperateSubCost(goodsConf.GetExpend()); err != nil {
+	if err := player.OperateSubCost(m.activity.getId(), goodsConf.GetExpend()); err != nil {
 		return err
 	}
 	// 添加奖励
-	if err := player.OperateAddReward(goodsConf.GetGoods()); err != nil {
+	if err := player.OperateAddReward(m.activity.getId(), goodsConf.GetGoods()); err != nil {
 		return err
 	}
 
